@@ -8,14 +8,15 @@ import { SafeAreaView, View, Text, StyleSheet, Image, Button, TouchableOpacity, 
 
 const ProfileScreen = () => {
     const user = {
-        name: 'John Doe',
-        bio: 'Passionate farmer with a love for sustainable agriculture.',
-        farmerID: 'FARM123456',
-        address: '123 Farm Lane, Green Valley',
-        numberOfPonds: 3,
+        name: 'MS Dhoni',
+        bio: 'Passionate strawberry farmer with helicopter irrigation system.',
+        cultivationType:'Strawberry',
+        farmerID: 'MS07CSK',
+        address: 'Ranchi, Jharkhand, India',
+        numberOfPonds: 1,
         experience: '5 years',
-        email: 'johndoe@example.com',
-        phone: '+1234567890',
+        email: 'msdhoni@csk.com',
+        phone: '+91 7777777',
     };
 
     return (
@@ -51,6 +52,7 @@ const ProfileScreen = () => {
             <View style={styles.detailsContainer}>
                 <Text style={styles.detailText}>Farmer Name: {user.name}</Text>
                 <Text style={styles.detailText}>Farmer ID: {user.farmerID}</Text>
+                <Text style={styles.detailText}>Cultivation: {user.cultivationType}</Text>
                 <Text style={styles.detailText}>Address: {user.address}</Text>
                 <Text style={styles.detailText}>Number of Ponds: {user.numberOfPonds}</Text>
                 <Text style={styles.detailText}>Experience: {user.experience}</Text>
