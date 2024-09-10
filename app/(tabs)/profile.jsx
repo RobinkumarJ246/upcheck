@@ -34,7 +34,7 @@ const ProfileScreen = () => {
             {/* Profile Picture */}
             <View style={styles.profilePictureContainer}>
                 <Image
-                    source={require('@/assets/images/upcheck-logo.png')} // Replace with your profile image URL
+                    source={require('@/assets/images/Ms_dhoni.png')} // Replace with your profile image URL
                     style={styles.profilePicture}
                 />
             </View>
