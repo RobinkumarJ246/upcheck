@@ -6,25 +6,11 @@ import IconFA6 from 'react-native-vector-icons/FontAwesome6';
 import { Link, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 
-const HomeTopBar = ({ title, onButtonPress }) => {
-    const router = useRouter();
-
-    const navigateToTest = () => {
-        if (onButtonPress) {
-            onButtonPress();
-        }
-        router.push('/TestScreen');
-    };
+const TopBar = ({ title}) => {
 
     return (
         <View style={styles.container}>
             <ThemedText style={styles.title}>{title}</ThemedText>
-            <TouchableOpacity style={styles.button} onPress={navigateToTest}>
-                <View style={styles.buttonContent}>
-                    <IconFA6 name='location-dot' style={styles.icon} />
-                    <ThemedText style={styles.buttonText}>PondOne</ThemedText>
-                </View>
-            </TouchableOpacity>
         </View>
     );
 };
@@ -63,4 +49,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default HomeTopBar;
+export default TopBar;
