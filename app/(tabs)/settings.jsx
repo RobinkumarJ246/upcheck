@@ -2,13 +2,15 @@ import MatIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react';
 import { SafeAreaView, ScrollView, View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import TopBar from '../../components/TopBar';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const boxSize = width / 2 - 30; // Two boxes in a row with some spacing
 
 const SettingsScreen = () => {
+    const router = useRouter();
     const options = [
-        { title: 'Account', icon: 'account-circle', onPress: () => alert('Account Pressed!') },
+        { title: 'Account', icon: 'account-circle', onPress: () => router.replace('login') },
         { title: 'Privacy', icon: 'lock', onPress: () => alert('Privacy Pressed!') },
         { title: 'Notification', icon: 'notifications', onPress: () => alert('Notification Pressed!') },
         { title: 'Language', icon: 'language', onPress: () => alert('Language Pressed!') },

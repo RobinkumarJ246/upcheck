@@ -6,6 +6,7 @@ import IconFA6 from 'react-native-vector-icons/FontAwesome6';
 import { Link, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 
+
 const HomeTopBar = ({ title, onButtonPress }) => {
     const router = useRouter();
 
@@ -13,7 +14,7 @@ const HomeTopBar = ({ title, onButtonPress }) => {
         if (onButtonPress) {
             onButtonPress();
         }
-        router.push('/TestScreen');
+        router.push('/signup');
     };
 
     return (
