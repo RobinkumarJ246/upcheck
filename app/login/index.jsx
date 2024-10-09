@@ -13,6 +13,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  BackHandler, 
+  Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -22,10 +24,35 @@ const { width } = Dimensions.get('window');
 const isLoggedIn = false; // Change to true to simulate a logged-in state
 
 function Login() {
+
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
+        {
+          text: "Cancel",
+          onPress: () => null,
+          style: "cancel",
+        },
+        { text: "YES", onPress: () => BackHandler.exitApp() },
+      ]);
+      return true; // Prevent the default back button behavior
+    };
+
+    // Add event listener for the hardware back press
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    // Clean up the event listener on unmount
+    return () => backHandler.remove();
+  }, []);
+  
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check login state on component mount
   useEffect(() => {
@@ -40,15 +67,56 @@ function Login() {
     checkLoginStatus();
   }, []);
 
-  const validateCredentials = () => {
-    // Hardcoded username and password for testing
-    const validEmail = 'robert@gmail.com';
-    const validPassword = '143341';
-
-    if (email === validEmail && password === validPassword) {
-      router.replace('/(tabs)');
-    } else {
-      alert('Invalid email or password'); // Show an alert for invalid credentials
+  // Function to handle API request for login
+  const validateCredentials = async () => {
+    setIsSubmitting(true);
+  
+    try {
+      const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+        // Login successful, navigate to the tabs page
+        router.replace('/(tabs)');
+      } else {
+        // Handle various response codes
+        switch (response.status) {
+          case 400: // Bad Request
+            alert('Invalid email or password. Please try again.');
+            break;
+          case 401: // Unauthorized
+            alert('Invalid email or password. Please check your credentials.');
+            break;
+          case 403: // Forbidden
+            alert('Access denied. Please contact support.');
+            break;
+          case 404: // Not Found
+            alert('User not found. Please check your email.');
+            break;
+          case 500: // Internal Server Error
+            alert('Server error. Please try again later.');
+            break;
+          default:
+            alert(result.message || 'Login failed. Please check your credentials.');
+            break;
+        }
+      }
+    } catch (error) {
+      // Catch any errors and display an alert
+      alert('An error occurred. Please try again later.');
+    } finally {
+      // Set loading back to false once request completes
+      setIsSubmitting(false);
     }
   };
 
@@ -80,13 +148,15 @@ function Login() {
             <Text style={styles.loginText}>Login to your account</Text>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.labelText}>Phone / E-mail address</Text>
+              <Text style={styles.labelText}>E-mail address</Text>
               <TextInput
                 placeholder="yourname@example.com"
                 placeholderTextColor="#999"
                 style={styles.input}
                 value={email}
-                onChangeText={setEmail} // Update username state
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
 
@@ -98,19 +168,24 @@ function Login() {
                 secureTextEntry
                 style={styles.input}
                 value={password}
-                onChangeText={setPassword} // Update password state
+                onChangeText={setPassword}
+                autoCapitalize="none"
               />
             </View>
 
             <TouchableOpacity
               style={styles.loginButton}
-              onPress={validateCredentials} // Validate on button press
+              onPress={validateCredentials}
+              disabled={isSubmitting} // Disable the button while submitting
             >
-              <Text style={styles.loginButtonText}>Login <EntypoIcon name="chevron-right" style={styles.nextIcon} /></Text>
+              <Text style={styles.loginButtonText}>
+                {isSubmitting ? 'Logging in...' : 'Login'}
+                {!isSubmitting && <EntypoIcon name="chevron-right" style={styles.nextIcon} />}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push('/signup')}>
+              onPress={() => router.replace('/signup')}>
               <Text style={styles.signupText}>
                 Don't have an account? Sign up here!
               </Text>
