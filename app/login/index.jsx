@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   StyleSheet,
   View,
@@ -56,15 +57,22 @@ function Login() {
 
   // Check login state on component mount
   useEffect(() => {
-    const checkLoginStatus = () => {
-      if (isLoggedIn) {
-        router.replace('/(tabs)');
-      } else {
+    const checkAuthStatus = async () => {
+      try {
+        const userDetails = await AsyncStorage.getItem('userDetails');
+        if (userDetails) {
+          // If userDetails exist, navigate to the tabs page
+          router.replace('/(tabs)');
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error checking authentication status:', error);
         setLoading(false);
       }
     };
 
-    checkLoginStatus();
+    checkAuthStatus();
   }, []);
 
   // Function to handle API request for login
@@ -72,7 +80,7 @@ function Login() {
     setIsSubmitting(true);
   
     try {
-      const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/login', {
+      const response = await fetch('https://upcheck-server.onrender.com/api/v2/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
