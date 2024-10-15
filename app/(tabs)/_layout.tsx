@@ -3,6 +3,7 @@ import React from 'react';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import MatIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import IonIcons from '@expo/vector-icons/Ionicons';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -25,11 +26,38 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="inventory"
+        options={{
+          title: 'Inventory',
+          tabBarIcon: ({ color, focused }) => (
+            <MatIcons name={focused ? 'archive' : 'archive-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ponds"
+        options={{
+          title: 'My Ponds',
+          tabBarIcon: ({ color, focused }) => (
+            <MatIcons name={focused ? 'fishbowl' : 'fishbowl-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
             <MatIcons name={focused ? 'account' : 'account-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="social"
+        options={{
+          title: 'Social',
+          tabBarIcon: ({ color, focused }) => (
+            <IonIcons name={focused ? 'globe-sharp' : 'globe-outline'} size={24} color={color} />
           ),
         }}
       />

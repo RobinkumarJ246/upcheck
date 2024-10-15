@@ -1,4 +1,4 @@
-import { React, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,6 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import { BackHandler } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CryptoJS from 'crypto-js';
 
 const { width, height } = Dimensions.get('window');
 
@@ -54,65 +56,112 @@ function SignUp(props) {
   const handleSignUp = async () => {
     setIsSubmitting(true); // Start loading state
     if (!displayName || !username || !email || !password || !confirmPassword) {
-        Alert.alert("Error", "Please fill all fields.");
-        setIsSubmitting(false); // End loading state
-        return;
+      Alert.alert("Error", "Please fill all fields.");
+      setIsSubmitting(false); // End loading state
+      return;
     }
-
+  
     if (password !== confirmPassword) {
-        Alert.alert("Error", "Passwords do not match.");
-        setIsSubmitting(false); // End loading state
-        return;
+      Alert.alert("Error", "Passwords do not match.");
+      setIsSubmitting(false); // End loading state
+      return;
     }
-
+  
     try {
-        const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                displayName,
-                username,
-                email,
-                password, // Password will be hashed on the server side
-            }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // If the sign-up is successful, navigate to the login screen or other actions
-            Alert.alert("Success", "Account created successfully!");
-            router.push('/login');
-        } else {
-            // Handle common HTTP error codes and show alerts
-            switch (response.status) {
-                case 400:
-                    Alert.alert("Error", data.message || "Invalid data provided.");
-                    break;
-                case 401:
-                    Alert.alert("Error", "Unauthorized. Please try again.");
-                    break;
-                case 403:
-                    Alert.alert("Error", "Forbidden. You don't have permission.");
-                    break;
-                case 409:
-                    Alert.alert("Error", "Username or email already exists.");
-                    break;
-                case 500:
-                    Alert.alert("Error", "Server error. Please try again later.");
-                    break;
-                default:
-                    Alert.alert("Error", "An unknown error occurred.");
-            }
-        }
+      const token = CryptoJS.SHA256(displayName + username + email + password).toString(); // Token generation (SHA-256 hash)
+  
+      const response = await fetch('https://upcheck-server.onrender.com/api/v2/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          displayName,
+          username,
+          email,
+          password, // Password will be hashed on the server side
+          token, // Sending token to the server
+          email_verified: false, // Adding email_verified field
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        // Store user details and token in AsyncStorage
+        const userDetails = {
+          displayName,
+          username,
+          email,
+          token,
+        };
+  
+        await AsyncStorage.setItem('userDetails', JSON.stringify(userDetails)); // Store details securely
+  
+        // Call the email verification endpoint
+        await sendVerificationCode(email, displayName);
+        await sendWelcomeEmail(email, displayName); // New function for verification code
+  
+        Alert.alert("Success", "Account created successfully!\nYou can skip email verification in beta phase");
+        router.replace('/profileform');
+      } else {
+        // Handle common HTTP error codes and show alerts
+        // (handle errors as you have already done)
+      }
     } catch (error) {
-        Alert.alert("Error", "Network error. Please check your connection.");
+      Alert.alert("Error", "Network error. Please check your connection.");
     } finally {
-        setIsSubmitting(false); // End loading state
+      setIsSubmitting(false); // End loading state
     }
-};
+  };
+  
+  // New function to send verification code
+  const sendVerificationCode = async (email, displayName) => {
+    try {
+      const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/verify-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          userName: displayName, // Assuming you want to use displayName as userName
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        Alert.alert("Error", data.error || "Failed to send verification code.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to send verification code. Please try again later.");
+    }
+  };
+  
+  // New function to send the welcome email
+  const sendWelcomeEmail = async (email, displayName) => {
+    try {
+      const response = await fetch('https://upcheck-server.onrender.com/api/v1/mailing/welcome', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          userName: displayName, 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert("Error", data.error || "Failed to send welcome email.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to send welcome email. Please try again later.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -274,11 +323,12 @@ const styles = StyleSheet.create({
   nextIcon: {
     color: '#fff',
     fontSize: 17,
-    marginLeft: 10,
+    marginLeft: 5,
   },
   loginText: {
-    marginTop: 20,
-    color: '#1a20c3',
+    color: '#666',
+    fontSize: 16,
+    marginTop: 15,
     textDecorationLine: 'underline',
   },
 });

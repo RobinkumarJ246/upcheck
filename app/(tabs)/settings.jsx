@@ -3,21 +3,67 @@ import React from 'react';
 import { SafeAreaView, ScrollView, View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import TopBar from '../../components/TopBar';
 import { useRouter } from 'expo-router';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width } = Dimensions.get('window');
 const boxSize = width / 2 - 30; // Two boxes in a row with some spacing
 
 const SettingsScreen = () => {
+      
+    const clearUserDetails = async () => {
+        try {
+          await AsyncStorage.removeItem('userDetails');
+          console.log('User details cleared from Async Storage');
+          // You can also navigate to the login page after clearing user details
+        } catch (error) {
+          console.error('Error clearing user details:', error);
+        }
+      };
+
+      const clearPondDetails = async () => {
+        try {
+          await AsyncStorage.removeItem('ponds');
+          console.log('Pond details cleared from Async Storage');
+          // You can also navigate to the login page after clearing user details
+          // Retrieve user details from AsyncStorage
+          const userDetailsString = await AsyncStorage.getItem('userDetails');
+          const userDetails = userDetailsString ? JSON.parse(userDetailsString) : null;
+      
+          if (userDetails) {
+            // Set pondsCount to 0
+            userDetails.pondsCount = 0;
+      
+            // Save updated user details back to AsyncStorage
+            await AsyncStorage.setItem('userDetails', JSON.stringify(userDetails));
+      
+            console.log('Ponds count reset to 0');
+          } else {
+            console.log('User details not found');
+          }
+        } catch (error) {
+          console.error('Error clearing user details:', error);
+        }
+      };
+
+      const clearFarmDetails = async () => {
+        try {
+          await AsyncStorage.removeItem('farms');
+          console.log('Farms details cleared from Async Storage');
+          // You can also navigate to the login page after clearing user details
+        } catch (error) {
+          console.error('Error clearing user details:', error);
+        }
+      };
+
     const router = useRouter();
     const options = [
-        { title: 'Account', icon: 'account-circle', onPress: () => router.replace('login') },
-        { title: 'Privacy', icon: 'lock', onPress: () => alert('Privacy Pressed!') },
+        { title: 'Logout', icon: 'account-circle', onPress: () => router.replace('login') },
+        { title: 'Show verif', icon: 'lock', onPress: () => router.replace('email_verif') },
         { title: 'Notification', icon: 'notifications', onPress: () => alert('Notification Pressed!') },
         { title: 'Language', icon: 'language', onPress: () => alert('Language Pressed!') },
         { title: 'About', icon: 'info', onPress: () => alert('About Pressed!') },
-        { title: 'Help', icon: 'help', onPress: () => alert('About Pressed!') },
-        { title: 'Invite user', icon: 'person-add-alt-1', onPress: () => alert('Update Pressed!') },
-        { title: 'Update', icon: 'update', onPress: () => alert('Update Pressed!') },
+        { title: 'ClearFarmStorage', icon: 'help', onPress: () => clearFarmDetails() },
+        { title: 'ClearPondStorage', icon: 'person-add-alt-1', onPress: () => clearPondDetails() },
+        { title: 'ClearUserStorage', icon: 'update', onPress: () => clearUserDetails() },
     ];
 
     return (
