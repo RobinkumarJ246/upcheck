@@ -23,12 +23,13 @@ const ProfileForm = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const cultivationOptions = ['Fish', 'Shrimp', 'Crabs', 'Lobster', 'Kelp'];
+  const router = useRouter();
 
   const handleCultivationSelect = (option) => {
     setCultivation(option);
     setModalVisible(false);
   };
-  const router = useRouter();
+
   const validateInputs = () => {
     if (cultivation === 'Example: Shrimp') {
       Alert.alert('Validation Error', 'Please select your major cultivation.');
@@ -51,39 +52,47 @@ const ProfileForm = () => {
 
   const saveUserDetails = async () => {
     try {
-      // Retrieve existing user details
-      const existingDetails = await AsyncStorage.getItem('userDetails');
-      const userDetails = existingDetails ? JSON.parse(existingDetails) : {};
-  
-      // Update the user details with new values
-      const updatedDetails = {
-        ...userDetails, // Spread the existing details
-        cultivation,
-        experience: Number(experience), // Store experience as a number
-        address,
-        phoneNumber,
-        bio,
-      };
-  
-      // Save the updated user details back to AsyncStorage
-      await AsyncStorage.setItem('userDetails', JSON.stringify(updatedDetails));
-      Alert.alert('Success', 'Profile information saved successfully!');
+      const userDetailsString = await AsyncStorage.getItem('userDetails'); // Retrieve user details
+      const userDetails = JSON.parse(userDetailsString);
+      const email = userDetails?.email; // Extract email
+
+      // Check if email is available
+      if (!email) {
+        Alert.alert('Error', 'User email not found in AsyncStorage.');
+        return;
+      }
+
+      const response = await fetch('https://upcheck-server.onrender.com/api/v2/auth/updateProfile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,  // Identify the user based on their email
+          cultivation,
+          experience: Number(experience), // Ensure experience is a number
+          address,
+          phoneNumber,
+          bio,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert("Success", data.message);
+        router.replace('/pondform');  // Redirect to another page after success
+      } else {
+        Alert.alert("Error", data.message);
+      }
     } catch (error) {
-      console.error(error);
+      console.log("Error submitting profile form:", error);
       Alert.alert('Error', 'Failed to save profile information.');
     }
   };  
 
   const handleSubmit = () => {
     if (validateInputs()) {
-      // Log input values for testing purposes
-      console.log('Cultivation:', cultivation);
-      console.log('Address:', address);
-      console.log('Experience:', experience);
-      console.log('Phone Number:', phoneNumber); // Optional
-      console.log('Bio:', bio); // Log bio
       saveUserDetails();
-      router.replace('/pondform')
     }
   };
 
@@ -92,6 +101,7 @@ const ProfileForm = () => {
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={styles.header}>Profile Information</Text>
         <Text style={styles.subtitle}>We need a bit more details about you to set the profile up!</Text>
+        
         {/* Cultivation Title and Selection */}
         <Text style={styles.inputLabel}>What is your Major Cultivation?</Text>
         <TouchableOpacity
@@ -121,7 +131,7 @@ const ProfileForm = () => {
         />
 
         {/* Short Bio Title and Input */}
-        <Text style={styles.inputLabel}>Write a short bio (30-80 characters, optional)</Text>
+        <Text style={styles.inputLabel}>Write a short bio (30-80 characters)</Text>
         <TextInput
           style={styles.input}
           placeholder="Tell us about yourself..."

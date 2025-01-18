@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { BackHandler, Alert } from 'react-native';
 import HomeScreen from '../home';
 import TestPage from '../TestScreen';
-import ProfileScreen from './profile';
+//import ProfileScreen from './profile';
 
 
 const Index = () => {

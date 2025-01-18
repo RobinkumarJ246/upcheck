@@ -81,32 +81,39 @@ function SignUp(props) {
           email,
           password, // Password will be hashed on the server side
           token, // Sending token to the server
-          email_verified: false, // Adding email_verified field
         }),
       });
   
       const data = await response.json();
+      console.log('Server Response:', data);
   
       if (response.ok) {
-        // Store user details and token in AsyncStorage
-        const userDetails = {
-          displayName,
-          username,
-          email,
-          token,
-        };
+          // Retrieve existing user details from AsyncStorage
+          const existingDetails = await AsyncStorage.getItem('userDetails');
+          const userId = data.userId;
+          await AsyncStorage.setItem('userId', userId);
+          const userDetails = existingDetails ? JSON.parse(existingDetails) : {};
   
-        await AsyncStorage.setItem('userDetails', JSON.stringify(userDetails)); // Store details securely
+          // Update user details to include userId
+          userDetails.displayName = displayName;
+          userDetails.username = username;
+          userDetails.email = email;
+          userDetails.token = token;
+          userDetails.userId = data.userId; // Store the userId from new endpoint
   
-        // Call the email verification endpoint
-        await sendVerificationCode(email, displayName);
-        await sendWelcomeEmail(email, displayName); // New function for verification code
+          // Save the updated user details back to AsyncStorage
+          await AsyncStorage.setItem('userDetails', JSON.stringify(userDetails));
   
-        Alert.alert("Success", "Account created successfully!\nYou can skip email verification in beta phase");
-        router.replace('/profileform');
-      } else {
-        // Handle common HTTP error codes and show alerts
-        // (handle errors as you have already done)
+          // Call the email verification endpoint
+          await sendVerificationCode(email, displayName);
+          await sendWelcomeEmail(email, displayName); // New function for verification code
+  
+          Alert.alert("Success", "Account created successfully!");
+          router.replace('/profileform');
+        }
+      else {
+        // Handle errors from the server
+        Alert.alert("Error", data.message || "Registration failed.");
       }
     } catch (error) {
       Alert.alert("Error", "Network error. Please check your connection.");
