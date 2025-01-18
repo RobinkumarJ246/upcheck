@@ -35,15 +35,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="ponds"
+        name="profile"
         options={{
-          title: 'My Ponds',
+          title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <MatIcons name={focused ? 'fishbowl' : 'fishbowl-outline'} size={24} color={color} />
+            <MatIcons name={focused ? 'account-circle' : 'account-circle-outline'} size={24} color={color} />
           ),
         }}
       />
-      <Tabs.Screen
+      {/*}<Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
@@ -51,7 +51,7 @@ export default function TabLayout() {
             <MatIcons name={focused ? 'account' : 'account-outline'} size={24} color={color} />
           ),
         }}
-      />
+      />{*/}
       <Tabs.Screen
         name="social"
         options={{

@@ -10,14 +10,15 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Link } from 'expo-router'; // Removed useTheme
+import MatIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Link } from 'expo-router';
 import { useRouter } from 'expo-router';
 
 // Custom Floating Action Button
 const CustomFAB = ({ onPress, icon }) => {
   return (
     <TouchableOpacity style={styles.fab} onPress={onPress}>
-      <Icon name={icon} size={28} color="#fff" />
+      <MatIcon name={icon} size={28} color="#fff" />
     </TouchableOpacity>
   );
 };
@@ -30,33 +31,55 @@ const CustomAddPondFAB = ({ onPress, icon }) => {
   );
 };
 
+// Skeleton Loader Component
+const SkeletonLoader = () => {
+  return (
+    <View style={styles.skeletonContainer}>
+      <View style={styles.skeletonItem} />
+      <View style={styles.skeletonItem} />
+      <View style={styles.skeletonItem} />
+    </View>
+  );
+};
+
 const PondsScreen = () => {
   const [ponds, setPonds] = useState([]);
   const [farms, setFarms] = useState([]);
   const [selectedPonds, setSelectedPonds] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Fetch ponds and farms from AsyncStorage
   useEffect(() => {
     fetchPondsAndFarms();
   }, []);
 
   const fetchPondsAndFarms = async () => {
+    setLoading(true); // Set loading to true while fetching
     try {
       const storedPonds = await AsyncStorage.getItem('ponds');
       const storedFarms = await AsyncStorage.getItem('farms');
 
       if (storedPonds) {
         const parsedPonds = JSON.parse(storedPonds);
-        setPonds(Object.values(parsedPonds));
+        const pondsWithId = Object.keys(parsedPonds).map((key) => ({
+          id: key,
+          ...parsedPonds[key],
+        }));
+        setPonds(pondsWithId);
+      } else {
+        setPonds([]);
       }
 
       if (storedFarms) {
         const parsedFarms = JSON.parse(storedFarms);
         setFarms(parsedFarms);
+      } else {
+        setFarms([]);
       }
     } catch (error) {
       console.log('Error fetching ponds and farms', error);
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -83,8 +106,6 @@ const PondsScreen = () => {
     const updatedPonds = ponds.filter((pond) => !selectedPonds.includes(pond));
     setPonds(updatedPonds);
     setFarms([...farms, newFarm]);
-
-    // Clear selection
     setSelectedPonds([]);
 
     await AsyncStorage.setItem('ponds', JSON.stringify(updatedPonds));
@@ -95,19 +116,16 @@ const PondsScreen = () => {
 
   const renderPondItem = ({ item }) => (
     <TouchableOpacity
-      style={[
-        styles.pondItem,
-        selectedPonds.includes(item) && styles.selectedPond,
-      ]}
+      style={[styles.pondItem, selectedPonds.includes(item) && styles.selectedPond]}
       onLongPress={() => handlePondSelect(item)}
     >
       <Text style={styles.pondText}>{item.name}</Text>
       <Text style={styles.pondDetailText}>Pond ID: {item.id}</Text>
+      <Text style={styles.pondDetailText}>Owner: {item.owner_email}</Text>
       <Text style={styles.pondDetailText}>Cultivation: {item.type}</Text>
       <Text style={styles.pondDetailText}>Stocking Density: {item.stockingDensity} per m²</Text>
       <Text style={styles.pondDetailText}>Area: {item.area} m²</Text>
       <Text style={styles.pondDetailText}>Depth: {item.depth} m</Text>
-      <Text style={styles.pondDetailText}>Owner: {item.username}</Text>
       <Text style={styles.pondDetailText}>Culture Start Date: {item.cultureStartDate}</Text>
       <Text style={styles.pondDetailText}>Location: {item.location}</Text>
     </TouchableOpacity>
@@ -124,32 +142,54 @@ const PondsScreen = () => {
     </Link>
   );
 
+  const handleRefresh = () => {
+    fetchPondsAndFarms();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.replace('(tabs)/profile')} style={styles.backButton}>
+          <Icon name="arrow-back" size={28} color="#1e88e5" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Ponds Management</Text>
+        <TouchableOpacity onPress={handleRefresh}>
+          <Icon name="refresh" size={28} color="#1e88e5" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>My Farms</Text>
-        <FlatList
-          data={farms}
-          renderItem={renderFarmItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={<Text>No farms created yet.</Text>}
-        />
+        {loading ? (
+          <SkeletonLoader />
+        ) : (
+          <FlatList
+            data={farms}
+            renderItem={renderFarmItem}
+            keyExtractor={(item) => item.id}
+            ListEmptyComponent={<Text>No farms created yet.</Text>}
+          />
+        )}
       </View>
 
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>My Ponds</Text>
-        <FlatList
-          data={ponds}
-          renderItem={renderPondItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={<Text>No ponds available.</Text>}
-        />
+        {loading ? (
+          <SkeletonLoader />
+        ) : (
+          <FlatList
+            data={ponds}
+            renderItem={renderPondItem}
+            keyExtractor={(item) => item.id}
+            ListEmptyComponent={<Text>No ponds available.</Text>}
+          />
+        )}
       </View>
 
       {/* Add Pond FAB */}
-      <CustomAddPondFAB icon="add" onPress={() => {router.push('/addpond')}} />
+      <CustomAddPondFAB icon="add" onPress={() => { router.push('/addpond'); }} />
       {/* Grouping FAB, always visible */}
-      <CustomFAB icon="group" onPress={groupPondsIntoFarm} />
+      <CustomFAB icon="arrow-collapse" onPress={groupPondsIntoFarm} />
     </SafeAreaView>
   );
 };
@@ -161,6 +201,16 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     marginTop: 30,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   sectionContainer: {
     marginBottom: 20,
   },
@@ -169,12 +219,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  backButton: {
+    padding: 0,
+  },
   pondItem: {
     padding: 16,
     backgroundColor: '#fff',
     marginBottom: 12,
     borderRadius: 8,
-    elevation: 2,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -185,6 +238,7 @@ const styles = StyleSheet.create({
   },
   pondText: {
     fontSize: 16,
+    fontWeight: 'bold',
   },
   pondDetailText: {
     fontSize: 14,
@@ -213,33 +267,29 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 16,
-    width: 60,
-    height: 60,
     backgroundColor: '#1e88e5',
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    borderRadius: 50,
+    padding: 16,
+    elevation: 6,
   },
   addPondFab: {
     position: 'absolute',
     right: 16,
-    bottom: 90, // Adjust this value to create space between the two FABs
-    width: 60,
+    bottom: 90,
+    backgroundColor: '#4CAF50',
+    borderRadius: 50,
+    padding: 16,
+    elevation: 6,
+  },
+  skeletonContainer: {
+    padding: 16,
+    backgroundColor: '#f4f4f4',
+  },
+  skeletonItem: {
     height: 60,
-    backgroundColor: '#1e88e5',
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    backgroundColor: '#e0e0e0',
+    marginBottom: 12,
+    borderRadius: 4,
   },
 });
 

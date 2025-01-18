@@ -16,6 +16,7 @@ import TopBar from '../../components/TopBar';
 import IconFA6 from 'react-native-vector-icons/FontAwesome6';
 import MatIcons from 'react-native-vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const AddPond = () => {
@@ -79,47 +80,101 @@ const AddPond = () => {
 
   const handleSubmit = async () => {
     if (validateInputs()) {
-      // Retrieve username from AsyncStorage
       const userDetailsString = await AsyncStorage.getItem('userDetails');
       const userDetails = userDetailsString ? JSON.parse(userDetailsString) : null;
-
+  
       if (!userDetails) {
         Alert.alert('Error', 'User details not found. Please log in again.');
         return;
       }
-
-      // Create pond details object
-      const pondDetails = {
-        id: (userDetails.pondsCount ? userDetails.pondsCount : 0) + 1, // Assign ID based on pondsCount
-        name: pondName,
-        depth: pondDepth,
-        area: pondArea,
-        stockingDensity,
-        cultureStartDate: cultureStartDate.toISOString().split('T')[0],
-        type: pondType,
-        location: pondLocation,
-        username: userDetails.username, // Link to the user's username
-      };
-
-      // Update userDetails
-      userDetails.pondsCount = userDetails.pondsCount ? userDetails.pondsCount + 1 : 1;
-      userDetails.ponds = userDetails.ponds || [];
-      userDetails.ponds.push(pondDetails.id); // Keep track of pond IDs
-
-      // Store updated userDetails in AsyncStorage
-      await AsyncStorage.setItem('userDetails', JSON.stringify(userDetails));
-
-      // Store pond details in AsyncStorage
-      const pondsString = await AsyncStorage.getItem('ponds');
-      const ponds = pondsString ? JSON.parse(pondsString) : {};
-      ponds[pondDetails.id] = pondDetails; // Store pond details with ID as key
-      await AsyncStorage.setItem('ponds', JSON.stringify(ponds));
-      console.log('Stored Ponds:', ponds);
-      // Show success message
-      Alert.alert('Success', 'Pond details submitted successfully!');
-      router.replace('/ponds');
+  
+      try {
+        // Fetch user document by email
+        const userResponse = await fetch(`https://upcheck-server.onrender.com/api/users/email/${userDetails.email}`, {
+          method: 'GET',
+        });
+  
+        if (!userResponse.ok) {
+          const errorText = await userResponse.text(); // Get the error message
+          throw new Error(`Failed to fetch user details: ${errorText}`);
+        }
+  
+        const userData = await userResponse.json(); // Get user details including _id
+        const userId = userData._id; // Get the user's _id
+  
+        // Create pond details object
+        const pondDetails = {
+          name: pondName,
+          depth: pondDepth,
+          area: pondArea,
+          stockingDensity,
+          cultureStartDate: cultureStartDate.toISOString().split('T')[0],
+          type: pondType,
+          location: pondLocation,
+          owner_email: userDetails.email, // Owner's email from user details
+          userId: userId, // User ID from fetched user data
+        };
+        console.log('Pond Details:', pondDetails);
+  
+        // Send pond details to the ponds collection in the database
+        const pondResponse = await fetch('https://upcheck-server.onrender.com/api/ponds', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(pondDetails),
+        });
+  
+        if (!pondResponse.ok) {
+          const errorText = await pondResponse.text();
+          throw new Error(`Failed to add pond details: ${errorText}`);
+        }
+  
+        const pondData = await pondResponse.json(); // Get the created pond document
+  
+        // Update user details in the users collection
+        const { _id, ...restOfUserData } = userData; // Extract _id and get the rest
+  
+        const updatedUserDetails = {
+          ...restOfUserData,
+          no_ponds: restOfUserData.no_ponds ? restOfUserData.no_ponds + 1 : 1,
+          pondIds: restOfUserData.pondIds ? [...restOfUserData.pondIds, pondData._id] : [pondData._id],
+        };
+  
+        const updateUserResponse = await fetch(`https://upcheck-server.onrender.com/api/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedUserDetails),
+        });
+  
+        if (!updateUserResponse.ok) {
+          const errorText = await updateUserResponse.text();
+          throw new Error(`Failed to update user details: ${errorText}`);
+        }
+  
+        // Store updated userDetails in AsyncStorage
+        await AsyncStorage.setItem('userDetails', JSON.stringify(updatedUserDetails));
+  
+        // Step to update ponds in AsyncStorage
+        const storedPondsString = await AsyncStorage.getItem('ponds');
+        const storedPonds = storedPondsString ? JSON.parse(storedPondsString) : {};
+        const newPondId = pondData._id;
+  
+        // Add the new pond to the ponds array in AsyncStorage
+        storedPonds[newPondId] = pondDetails; // Assuming ponds are keyed by their IDs
+        await AsyncStorage.setItem('ponds', JSON.stringify(storedPonds));
+  
+        // Show success message
+        Alert.alert('Success', 'Pond details submitted successfully!');
+        router.replace('/(tabs)/ponds');
+  
+      } catch (error) {
+        Alert.alert('Error', error.message);
+      }
     }
-  };
+  }; 
 
   // Function to get current location and reverse geocode it
   const getCurrentLocation = async () => {
@@ -143,15 +198,13 @@ const AddPond = () => {
   // Function to handle date change from DateTimePicker
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || cultureStartDate;
-    setShowDatePicker(false);
     setCultureStartDate(currentDate);
-  };
 
   return (
     <SafeAreaView style={styles.container}>
       <TopBar title={'Upcheck'} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.header}>Add a new pond</Text>
+        <Text style={styles.header}>Add a new pond!</Text>
         <Text style={styles.subtitle}>
           Please provide details about your pond.
         </Text>
@@ -314,6 +367,9 @@ const styles = StyleSheet.create({
     padding: 10,
     marginLeft: 10,
   },
+  backButton: {
+    padding: 0,
+  },
   getLocationText: {
     color: '#ffffff',
     marginLeft: 3,
@@ -396,5 +452,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', // Center align items vertically
   },
 });
+}
 
 export default AddPond;
