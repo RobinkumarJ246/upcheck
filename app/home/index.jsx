@@ -1,99 +1,104 @@
 import React from 'react';
-import { Image, StyleSheet, View, SafeAreaView, Alert, TouchableOpacity } from 'react-native';
-import { Box, Div, Badge } from 'react-native-magnus';
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import {
+  Image,
+  StyleSheet,
+  View,
+  SafeAreaView,
+  Alert,
+  TouchableOpacity,
+  Dimensions,
+  Text,
+} from 'react-native';
+import { Box, Div } from 'react-native-magnus';
 import IconF from 'react-native-vector-icons/Feather';
 import IconFA from 'react-native-vector-icons/FontAwesome';
 import IconFA6 from 'react-native-vector-icons/FontAwesome6';
 import HomeTopBar from '../../components/HomeTopBar';
-import Menu from '../../components/Menu';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const handleRefreshFetch = () => {
     Alert.alert(
-        'Data Fetching', // Title of the alert
-        'Refetching data from the server. Please wait for a moment of silence because this in development, for now no legit :)', // Message
-        [
-            {
-                text: 'OK',
-                onPress: () => console.log('OK Pressed')
-            },
-        ],
-        { cancelable: true }
+      'Data Fetching',
+      'Refetching data from the server. Please wait for a moment of silence because this is in development.',
+      [
+        {
+          text: 'OK',
+          onPress: () => console.log('OK Pressed'),
+        },
+      ],
+      { cancelable: true }
     );
-};
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <HomeTopBar style={styles.topBar} title = "Upcheck"/>
-      
+      <HomeTopBar title="Upcheck" />
+
       <ParallaxScrollView
-        headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+        headerBackgroundColor="#A1CEDC"
         headerImage={
           <Image
             source={require('@/assets/images/upcheck-logo.png')}
-            style={styles.reactLogo}
+            style={styles.logo}
           />
         }
       >
-        {/*}<Div row style={styles.titleContainer}>
-          <ThemedView>
-            <ThemedText type="title" style={styles.titleText}>Welcome to Upcheck!</ThemedText>
-            <HelloWave style={styles.helloWave} />
-          </ThemedView>
-        </Div>{*/}
-        <Div row style={styles.subtitleContainer} alignItems = 'center'>
-          <ThemedText type='subtitle'>
+        <Div row justifyContent="center" style={styles.subtitleContainer}>
+          <ThemedText type="subtitle" style={styles.subtitleText}>
             Dashboard
-            {/*}<Badge ml="md" bg="red500">Live</Badge>{*/}
           </ThemedText>
         </Div>
-        <Div row justifyContent='center' alignItems='center'><ThemedText>Last Fetched: 5mins ago</ThemedText>
-        <TouchableOpacity style={styles.fetchButton} onPress={handleRefreshFetch}>
-                <View style={styles.fetchButtonContent}>
-                    <IconFA name='refresh' style={styles.refreshIcon} />
-                    {/*}<ThemedText style={styles.fetchButtonText}>PondOne</ThemedText>{*/}
-                </View>
-            </TouchableOpacity>
+
+        <Div row justifyContent="center" style={styles.lastFetched}>
+          <Text style={styles.lastFetchedText}>Last Fetched: 5 mins ago</Text>
+          <TouchableOpacity style={styles.fetchButton} onPress={handleRefreshFetch}>
+            <IconFA name="refresh" style={styles.refreshIcon} />
+          </TouchableOpacity>
         </Div>
+
         <View style={styles.boxContainer}>
-          <Box p="md" borderRadius={8} bg="white" shadow="md" m="sm" style={styles.box}>
-            <Div row alignItems='center'>
-              <IconF name='cloud-rain' style={styles.icon} />
-              <ThemedView style={styles.stepContainer}>
-                <ThemedText type="subtitle">Rainfall</ThemedText>
-                <ThemedText>10.7 mm</ThemedText>
-              </ThemedView>
+          <Box style={styles.box}>
+            <Div row alignItems="center">
+              <IconF name="cloud-rain" style={styles.icon} />
+              <View>
+                <Text style={styles.boxTitle}>Rainfall</Text>
+                <Text style={styles.boxValue}>10.7 mm</Text>
+              </View>
             </Div>
           </Box>
-          <Box p="md" borderRadius={8} bg="white" shadow="md" m="sm" style={styles.box}>
-            <Div row alignItems='center'>
-              <IconF name='wind' style={styles.icon} />
-              <ThemedView style={styles.stepContainer}>
-                <ThemedText type="subtitle">Humidity</ThemedText>
-                <ThemedText>60%</ThemedText>
-              </ThemedView>
+
+          <Box style={styles.box}>
+            <Div row alignItems="center">
+              <IconF name="wind" style={styles.icon} />
+              <View>
+                <Text style={styles.boxTitle}>Humidity</Text>
+                <Text style={styles.boxValue}>60%</Text>
+              </View>
             </Div>
           </Box>
-          <Box p="md" borderRadius={8} bg="white" shadow="md" m="sm" style={styles.box}>
-            <Div row alignItems='center'>
-              <IconFA6 name='temperature-half' style={styles.icon} />
-              <ThemedView style={styles.stepContainer}>
-                <ThemedText type="subtitle">Temperature</ThemedText>
-                <ThemedText>24 C</ThemedText>
-              </ThemedView>
+
+          <Box style={styles.box}>
+            <Div row alignItems="center">
+              <IconFA6 name="temperature-half" style={styles.icon} />
+              <View>
+                <Text style={styles.boxTitle}>Temperature</Text>
+                <Text style={styles.boxValue}>24 °C</Text>
+              </View>
             </Div>
           </Box>
-          <Box p="md" borderRadius={8} bg="white" shadow="md" m="sm" style={styles.box}>
-            <Div row alignItems='center'>
-              <IconF name='cloud' style={styles.icon} />
-              <ThemedView style={styles.stepContainer}>
-                <ThemedText type="subtitle">Cloud coverage</ThemedText>
-                <ThemedText>72%</ThemedText>
-              </ThemedView>
+
+          <Box style={styles.box}>
+            <Div row alignItems="center">
+              <IconF name="cloud" style={styles.icon} />
+              <View>
+                <Text style={styles.boxTitle}>Cloud Coverage</Text>
+                <Text style={styles.boxValue}>72%</Text>
+              </View>
             </Div>
           </Box>
         </View>
@@ -105,68 +110,72 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFFFFF', // Ensures the background doesn't depend on system theme
   },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    padding: 10,
-    
-  },
-  titleText: {
-    fontSize: 25,
-    marginRight: 10,
-  },
-  helloWave: {
-    marginLeft: 10,
+  logo: {
+    height: 150,
+    width: width * 0.8,
+    alignSelf: 'center',
+    marginTop: 20,
+    resizeMode: 'contain',
   },
   subtitleContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
+    marginTop: 10,
+    marginBottom: 15,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitleText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  lastFetched: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
+  },
+  lastFetchedText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  fetchButton: {
+    marginLeft: 10,
+    backgroundColor: '#03DAC6',
+    padding: 8,
+    borderRadius: 5,
+  },
+  refreshIcon: {
+    fontSize: 18,
+    color: '#FFF',
   },
   boxContainer: {
     paddingHorizontal: 10,
+    marginTop: 10,
   },
   box: {
-    width: '100%', 
+    width: '100%',
+    padding: 15,
     marginBottom: 10,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3, // For Android shadow
   },
   icon: {
-    fontSize: 24,
+    fontSize: 30,
+    color: '#03DAC6',
     marginRight: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  topBar: {
-    paddingTop: 0,
-    zIndex: 1,
-  },
-  fetchButton: {
-    backgroundColor: '#03dac6', // Teal color
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 5,
-    marginLeft: 10
-},
-fetchButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-},
-fetchButtonText: {
-    color: '#000000', // Black color
+  boxTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
-},
-refreshIcon: {
-},
+    color: '#333',
+  },
+  boxValue: {
+    fontSize: 14,
+    color: '#777',
+  },
 });
