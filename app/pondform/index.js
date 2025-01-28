@@ -167,7 +167,7 @@ const PondDetailsForm = () => {
   
         // Show success message
         Alert.alert('Success', 'Pond details submitted successfully!');
-        router.replace('/email_verif');
+        router.replace('/(tabs)');
   
       } catch (error) {
         Alert.alert('Error', error.message);

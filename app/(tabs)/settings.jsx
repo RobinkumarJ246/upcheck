@@ -56,17 +56,20 @@ const SettingsScreen = () => {
 
     const router = useRouter();
     const options = [
-        { title: 'My profile', icon: 'account-circle', onPress: () => router.push('profile') },
-        { title: 'My account', icon: 'manage-accounts', onPress: () => alert('Account Pressed!') },
-        { title: 'Notification', icon: 'notifications', onPress: () => alert('Notification Pressed!') },
-        { title: 'Language', icon: 'language', onPress: () => alert('Language Pressed!') },
-        { title: 'Show verif', icon: 'lock', onPress: () => router.replace('email_verif') },
-        { title: 'Show verif', icon: 'lock', onPress: () => router.replace('email_verif') },
-        { title: 'ClearFarmStorage', icon: 'help', onPress: () => clearFarmDetails() },
-        { title: 'ClearPondStorage', icon: 'person-add-alt-1', onPress: () => clearPondDetails() },
-        { title: 'ClearUserStorage', icon: 'update', onPress: () => clearUserDetails() },
-        { title: 'Logout', icon: 'logout', onPress: () => router.replace('login') },
-    ];
+      { title: 'My profile', icon: 'account-circle', onPress: () => router.push('profile') },
+      { title: 'My account', icon: 'manage-accounts', onPress: () => alert('Account Pressed!') },
+      { title: 'Notification', icon: 'notifications', onPress: () => alert('Notification Pressed!') },
+      { title: 'Language', icon: 'language', onPress: () => alert('Language Pressed!') },
+      { title: 'Show verif', icon: 'lock', onPress: () => router.replace('email_verif') },
+      { title: 'ClearFarmStorage', icon: 'help', onPress: () => clearFarmDetails() },
+      { title: 'ClearPondStorage', icon: 'person-add-alt-1', onPress: () => clearPondDetails() },
+      { title: 'ClearUserStorage', icon: 'update', onPress: () => clearUserDetails() },
+      { title: 'Logout', icon: 'logout', onPress: async () => {
+          await clearUserDetails(); // Clear user details
+          router.replace('login'); // Navigate to login screen
+      }},
+  ];
+  
 
     return (
         <SafeAreaView style={styles.safeArea}>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import EntypoIcon from 'react-native-vector-icons/Entypo';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from "react";
+import EntypoIcon from "react-native-vector-icons/Entypo";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   StyleSheet,
   View,
@@ -10,64 +10,31 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  BackHandler, 
-  Alert
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-
-const { width } = Dimensions.get('window');
-
-// Simulated login state (for testing)
-const isLoggedIn = false; // Change to true to simulate a logged-in state
+  ScrollView,
+} from "react-native";
 
 function Login() {
-
-  useEffect(() => {
-    const backAction = () => {
-      Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
-        {
-          text: "Cancel",
-          onPress: () => null,
-          style: "cancel",
-        },
-        { text: "YES", onPress: () => BackHandler.exitApp() },
-      ]);
-      return true; // Prevent the default back button behavior
-    };
-
-    // Add event listener for the hardware back press
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
-
-    // Clean up the event listener on unmount
-    return () => backHandler.remove();
-  }, []);
-  
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check login state on component mount
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const userDetails = await AsyncStorage.getItem('userDetails');
+        const userDetails = await AsyncStorage.getItem("userDetails");
         if (userDetails) {
-          // If userDetails exist, navigate to the tabs page
-          router.replace('/(tabs)');
+          router.replace("/(tabs)");
         } else {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error checking authentication status:', error);
+        console.error("Error checking authentication status:", error);
         setLoading(false);
       }
     };
@@ -75,224 +42,206 @@ function Login() {
     checkAuthStatus();
   }, []);
 
-  // Function to handle API request for login
+  // Handle login API request
   const validateCredentials = async () => {
     setIsSubmitting(true);
-  
+
     try {
-      const response = await fetch('https://upcheck-server.onrender.com/api/v2/auth/login', {
-        method: 'POST',
+      const response = await fetch("https://upcheck-server.onrender.com/api/v2/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: email,
           password: password,
         }),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
-        // Login successful, navigate to the tabs page
-        router.replace('/(tabs)');
+        await AsyncStorage.setItem("userDetails", JSON.stringify(result));
+        router.replace("/(tabs)");
       } else {
-        // Handle various response codes
-        switch (response.status) {
-          case 400: // Bad Request
-            alert('Invalid email or password. Please try again.');
-            break;
-          case 401: // Unauthorized
-            alert('Invalid email or password. Please check your credentials.');
-            break;
-          case 403: // Forbidden
-            alert('Access denied. Please contact support.');
-            break;
-          case 404: // Not Found
-            alert('User not found. Please check your email.');
-            break;
-          case 500: // Internal Server Error
-            alert('Server error. Please try again later.');
-            break;
-          default:
-            alert(result.message || 'Login failed. Please check your credentials.');
-            break;
-        }
+        const errorMessage =
+          result.message || "Login failed. Please check your credentials.";
+        alert(errorMessage);
       }
     } catch (error) {
-      // Catch any errors and display an alert
-      alert('An error occurred. Please try again later.');
+      alert("An error occurred. Please try again later.");
     } finally {
-      // Set loading back to false once request completes
       setIsSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#50e3c2" />
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#43C0C5" />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#a7e7e9', '#c7c5f7', '#e7cded']}
-        style={styles.background}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
-          <View style={styles.loginContainer}>
-            <Image
-              source={require('../../assets/images/upcheck-logo.png')}
-              resizeMode="contain"
-              style={styles.logo}
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <Image
+            source={require("../../assets/images/upcheck-logo.png")}
+            style={styles.logo}
+          />
+          <Text style={styles.title}>Welcome to Upcheck!</Text>
+          <Text style={styles.welcomeText}>Login to your account</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, styles.passwordInput]}
+              placeholder="Password"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
             />
-            <Text style={styles.welcomeText}>Welcome to Upcheck!</Text>
-            <Text style={styles.loginText}>Login to your account</Text>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.labelText}>E-mail address</Text>
-              <TextInput
-                placeholder="yourname@example.com"
-                placeholderTextColor="#999"
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.labelText}>Password</Text>
-              <TextInput
-                placeholder="Enter your password"
-                placeholderTextColor="#999"
-                secureTextEntry
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                autoCapitalize="none"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={validateCredentials}
-              disabled={isSubmitting} // Disable the button while submitting
-            >
-              <Text style={styles.loginButtonText}>
-                {isSubmitting ? 'Logging in...' : 'Login'}
-                {!isSubmitting && <EntypoIcon name="chevron-right" style={styles.nextIcon} />}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.replace('/signup')}>
-              <Text style={styles.signupText}>
-                Don't have an account? Sign up here!
-              </Text>
-            </TouchableOpacity>
+            <EntypoIcon name="eye" size={20} style={styles.eyeIcon} />
           </View>
-        </KeyboardAvoidingView>
-      </LinearGradient>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={validateCredentials}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.buttonText}>
+              {isSubmitting ? "Logging in..." : "Login"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.replace("/forgot-password")}
+          >
+            <Text style={styles.forgotPassword}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.replace("/signup")}>
+            <Text style={styles.footerText}>
+              Don't have an account? <Text style={styles.link}>Sign up here!</Text>
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   container: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  nextIcon: {
-    color: '#fff',
-    fontSize: 17,
-    marginLeft: 10,
-  },
-  loginContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
     padding: 20,
-    width: '85%',
-    alignSelf: 'center',
-    alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: "100%",
   },
   logo: {
-    width: width * 0.3,
-    height: width * 0.3,
-    marginBottom: 20,
+    width: 120,
+    height: 120,
+    marginBottom: 10,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: "#43C0C5",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
   },
   welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  loginText: {
-    fontSize: 16,
+    fontSize: 18,
+    color: "#666",
     marginBottom: 20,
-    color: '#666',
-  },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 15,
-  },
-  labelText: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#333',
-    fontWeight: '600',
+    textAlign: "center",
   },
   input: {
-    backgroundColor: '#f0f0f0',
+    width: "100%",
+    height: 50,
+    backgroundColor: "#fff",
     borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
+    paddingHorizontal: 15,
+    marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  loginButton: {
-    backgroundColor: '#50e3c2',
-    borderRadius: 25,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
+  passwordContainer: {
+    position: "relative",
+    width: "100%",
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 15,
+    top: "50%",
+    transform: [{ translateY: -12 }],
+  },
+  button: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#43C0C5",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    marginVertical: 10,
+    shadowColor: "#43C0C5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  forgotPassword: {
+    fontSize: 14,
+    color: "#43C0C5",
+    fontWeight: "bold",
+    marginTop: 10,
+    textDecorationLine: "underline",
+    textAlign: "center",
+  },
+  footerText: {
     marginTop: 20,
+    fontSize: 14,
+    color: "#666",
   },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  signupText: {
-    marginTop: 20,
-    color: '#1a20c3',
-    textDecorationLine: 'underline',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+  link: {
+    color: "#43C0C5",
+    fontWeight: "bold",
   },
 });
 
