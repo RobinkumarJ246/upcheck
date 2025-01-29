@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
-import EntypoIcon from "react-native-vector-icons/Entypo";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react"
+import { useRouter } from "expo-router"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import {
   StyleSheet,
   View,
@@ -14,37 +13,40 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
-} from "react-native";
+  Dimensions,
+} from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+
+const { width } = Dimensions.get("window")
 
 function Login() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
-  // Check login state on component mount
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const userDetails = await AsyncStorage.getItem("userDetails");
+        const userDetails = await AsyncStorage.getItem("userDetails")
         if (userDetails) {
-          router.replace("/(tabs)");
+          router.replace("/(tabs)")
         } else {
-          setLoading(false);
+          setLoading(false)
         }
       } catch (error) {
-        console.error("Error checking authentication status:", error);
-        setLoading(false);
+        console.error("Error checking authentication status:", error)
+        setLoading(false)
       }
-    };
+    }
 
-    checkAuthStatus();
-  }, []);
+    checkAuthStatus()
+  }, [router.replace]) // Added router.replace to dependencies
 
-  // Handle login API request
   const validateCredentials = async () => {
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
       const response = await fetch("https://upcheck-server.onrender.com/api/v2/auth/login", {
@@ -56,119 +58,123 @@ function Login() {
           email: email,
           password: password,
         }),
-      });
+      })
 
-      const result = await response.json();
+      const result = await response.json()
 
       if (response.ok) {
-        await AsyncStorage.setItem("userDetails", JSON.stringify(result));
-        router.replace("/(tabs)");
+        await AsyncStorage.setItem("userDetails", JSON.stringify(result))
+        router.replace("/(tabs)")
       } else {
-        const errorMessage =
-          result.message || "Login failed. Please check your credentials.";
-        alert(errorMessage);
+        const errorMessage = result.message || "Login failed. Please check your credentials."
+        alert(errorMessage)
       }
     } catch (error) {
-      alert("An error occurred. Please try again later.");
+      alert("An error occurred. Please try again later.")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   if (loading) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#43C0C5" />
       </View>
-    );
+    )
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <Image
-            source={require("../../assets/images/upcheck-logo.png")}
-            style={styles.logo}
-          />
+          <View style={styles.logoContainer}>
+            <Image source={require("../../assets/images/upcheck-logo.png")} style={styles.logo} />
+          </View>
           <Text style={styles.title}>Welcome to Upcheck!</Text>
           <Text style={styles.welcomeText}>Login to your account</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
-
-          <View style={styles.passwordContainer}>
+          <View style={styles.inputContainer}>
+            <Ionicons name="mail-outline" size={24} color="#43C0C5" style={styles.inputIcon} />
             <TextInput
-              style={[styles.input, styles.passwordInput]}
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={24} color="#43C0C5" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
               placeholder="Password"
               placeholderTextColor="#999"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
             />
-            <EntypoIcon name="eye" size={20} style={styles.eyeIcon} />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#43C0C5" />
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={validateCredentials}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.buttonText}>
-              {isSubmitting ? "Logging in..." : "Login"}
-            </Text>
+          <TouchableOpacity style={styles.button} onPress={validateCredentials} disabled={isSubmitting}>
+            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => router.replace("/forgot-password")}
-          >
+          <TouchableOpacity onPress={() => router.replace("/forgot-password")} style={styles.forgotPasswordContainer}>
             <Text style={styles.forgotPassword}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.replace("/signup")}>
-            <Text style={styles.footerText}>
-              Don't have an account? <Text style={styles.link}>Sign up here!</Text>
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.signupContainer}>
+            <Text style={styles.footerText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={() => router.replace("/signup")}>
+              <Text style={styles.link}>Sign up here!</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f4f7fa",
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 40,
   },
-  container: {
-    flex: 1,
+  logoContainer: {
+    width: width * 0.4,
+    height: width * 0.4,
+    borderRadius: (width * 0.4) / 2,
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 20,
-    width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+    marginBottom: 30,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 10,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: "#43C0C5",
+    width: "80%",
+    height: "80%",
+    resizeMode: "contain",
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#333",
     marginBottom: 10,
@@ -176,36 +182,34 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 18,
     color: "#666",
-    marginBottom: 20,
+    marginBottom: 30,
     textAlign: "center",
   },
-  input: {
+  inputContainer: {
     width: "100%",
-    height: 50,
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 10,
+    borderRadius: 12,
+    marginBottom: 15,
     paddingHorizontal: 15,
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  passwordContainer: {
-    position: "relative",
-    width: "100%",
+  inputIcon: {
+    marginRight: 10,
   },
-  passwordInput: {
-    paddingRight: 50,
+  input: {
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    color: "#333",
   },
   eyeIcon: {
-    position: "absolute",
-    right: 15,
-    top: "50%",
-    transform: [{ translateY: -12 }],
+    padding: 10,
   },
   button: {
     width: "100%",
@@ -213,36 +217,45 @@ const styles = StyleSheet.create({
     backgroundColor: "#43C0C5",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10,
-    marginVertical: 10,
+    borderRadius: 12,
+    marginVertical: 20,
     shadowColor: "#43C0C5",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
+  },
+  forgotPasswordContainer: {
+    alignSelf: "flex-end",
+    marginBottom: 20,
   },
   forgotPassword: {
     fontSize: 14,
     color: "#43C0C5",
-    fontWeight: "bold",
-    marginTop: 10,
-    textDecorationLine: "underline",
-    textAlign: "center",
+    fontWeight: "600",
+  },
+  signupContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
   },
   footerText: {
-    marginTop: 20,
     fontSize: 14,
     color: "#666",
+    marginRight: 5,
   },
   link: {
+    fontSize: 14,
     color: "#43C0C5",
     fontWeight: "bold",
   },
-});
+})
 
-export default Login;
+export default Login
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react"
 import {
   SafeAreaView,
   Text,
@@ -8,155 +8,150 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import TopBar from '../../components/TopBar';
-import { useRouter } from 'expo-router';
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useRouter } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
 
 const ProfileForm = () => {
-  const [cultivation, setCultivation] = useState('Example: Shrimp');
-  const [experience, setExperience] = useState('');
-  const [address, setAddress] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [bio, setBio] = useState(''); // New state for bio
-  const [modalVisible, setModalVisible] = useState(false);
+  const [cultivation, setCultivation] = useState("Example: Shrimp")
+  const [experience, setExperience] = useState("")
+  const [address, setAddress] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [bio, setBio] = useState("")
+  const [modalVisible, setModalVisible] = useState(false)
 
-  const cultivationOptions = ['Fish', 'Shrimp', 'Crabs', 'Lobster', 'Kelp'];
-  const router = useRouter();
+  const cultivationOptions = ["Fish", "Shrimp", "Crabs", "Lobster", "Kelp"]
+  const router = useRouter()
 
   const handleCultivationSelect = (option) => {
-    setCultivation(option);
-    setModalVisible(false);
-  };
+    setCultivation(option)
+    setModalVisible(false)
+  }
 
   const validateInputs = () => {
-    if (cultivation === 'Example: Shrimp') {
-      Alert.alert('Validation Error', 'Please select your major cultivation.');
-      return false;
+    if (cultivation === "Example: Shrimp") {
+      Alert.alert("Validation Error", "Please select your major cultivation.")
+      return false
     }
-    if (address.trim() === '') {
-      Alert.alert('Validation Error', 'Please enter your residential address.');
-      return false;
+    if (address.trim() === "") {
+      Alert.alert("Validation Error", "Please enter your residential address.")
+      return false
     }
-    if (experience.trim() === '' || isNaN(experience) || Number(experience) <= 0) {
-      Alert.alert('Validation Error', 'Please enter a valid number for experience.');
-      return false;
+    if (experience.trim() === "" || isNaN(experience) || Number(experience) <= 0) {
+      Alert.alert("Validation Error", "Please enter a valid number for experience.")
+      return false
     }
     if (bio.length < 30 || bio.length > 80) {
-      Alert.alert('Validation Error', 'Your bio must be between 30 and 80 characters.');
-      return false;
+      Alert.alert("Validation Error", "Your bio must be between 30 and 80 characters.")
+      return false
     }
-    return true;
-  };
+    return true
+  }
 
   const saveUserDetails = async () => {
     try {
-      const userDetailsString = await AsyncStorage.getItem('userDetails'); // Retrieve user details
-      const userDetails = JSON.parse(userDetailsString);
-      const email = userDetails?.email; // Extract email
+      const userDetailsString = await AsyncStorage.getItem("userDetails")
+      const userDetails = JSON.parse(userDetailsString)
+      const email = userDetails?.email
 
-      // Check if email is available
       if (!email) {
-        Alert.alert('Error', 'User email not found in AsyncStorage.');
-        return;
+        Alert.alert("Error", "User email not found in AsyncStorage.")
+        return
       }
 
-      const response = await fetch('https://upcheck-server.onrender.com/api/v2/auth/updateProfile', {
-        method: 'PUT',
+      const response = await fetch("https://upcheck-server.onrender.com/api/v2/auth/updateProfile", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,  // Identify the user based on their email
+          email,
           cultivation,
-          experience: Number(experience), // Ensure experience is a number
+          experience: Number(experience),
           address,
           phoneNumber,
           bio,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
       if (response.ok) {
-        Alert.alert("Success", data.message);
-        router.replace('/pondform');  // Redirect to another page after success
+        router.replace("/pondform")
       } else {
-        Alert.alert("Error", data.message);
+        Alert.alert("Error", data.message)
       }
     } catch (error) {
-      console.log("Error submitting profile form:", error);
-      Alert.alert('Error', 'Failed to save profile information.');
+      console.log("Error submitting profile form:", error)
+      Alert.alert("Error", "Failed to save profile information.")
     }
-  };  
+  }
 
   const handleSubmit = () => {
     if (validateInputs()) {
-      saveUserDetails();
+      saveUserDetails()
     }
-  };
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.header}>Profile Information</Text>
-        <Text style={styles.subtitle}>We need a bit more details about you to set the profile up!</Text>
-        
-        {/* Cultivation Title and Selection */}
-        <Text style={styles.inputLabel}>What is your Major Cultivation?</Text>
-        <TouchableOpacity
-          style={styles.input}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.placeholderText}>{cultivation}</Text>
-        </TouchableOpacity>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollViewContent}>
+          <Text style={styles.header}>Profile Information</Text>
+          <Text style={styles.subtitle}>We need a bit more details about you to set the profile up!</Text>
 
-        {/* Address Title and Input */}
-        <Text style={styles.inputLabel}>What is your Residential address?</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 123 Main St, City"
-          value={address}
-          onChangeText={setAddress}
-        />
+          <FormInput
+            label="What is your Major Cultivation?"
+            value={cultivation}
+            onPress={() => setModalVisible(true)}
+            icon="water-outline"
+          />
 
-        {/* Experience Title and Input */}
-        <Text style={styles.inputLabel}>What is your overall experience (in years)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 5"
-          keyboardType="numeric"
-          value={experience}
-          onChangeText={setExperience}
-        />
+          <FormInput
+            label="What is your Residential address?"
+            value={address}
+            onChangeText={setAddress}
+            placeholder="e.g., 123 Main St, City"
+            icon="home-outline"
+          />
 
-        {/* Short Bio Title and Input */}
-        <Text style={styles.inputLabel}>Write a short bio (30-80 characters)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Tell us about yourself..."
-          value={bio}
-          onChangeText={setBio}
-          maxLength={80} // Limit input length to 80 characters
-        />
+          <FormInput
+            label="What is your overall experience (in years)"
+            value={experience}
+            onChangeText={setExperience}
+            placeholder="e.g., 5"
+            keyboardType="numeric"
+            icon="briefcase-outline"
+          />
 
-        {/* Optional Phone Number Title and Input */}
-        <Text style={styles.inputLabel}>What is your Phone Number (optional)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 9876543210"
-          keyboardType="phone-pad"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-        />
+          <FormInput
+            label="Write a short bio (30-80 characters)"
+            value={bio}
+            onChangeText={setBio}
+            placeholder="Tell us about yourself..."
+            maxLength={80}
+            multiline
+            icon="person-outline"
+          />
 
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Submit</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <FormInput
+            label="What is your Phone Number (optional)"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            placeholder="e.g., 9876543210"
+            keyboardType="phone-pad"
+            icon="call-outline"
+          />
 
-      {/* Modal for Cultivation Options */}
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+            <Text style={styles.buttonText}>Submit</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -176,100 +171,163 @@ const ProfileForm = () => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
     </SafeAreaView>
-  );
-};
+  )
+}
+
+const FormInput = ({ label, value, onChangeText, placeholder, keyboardType, multiline, icon, onPress }) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <View style={styles.inputWrapper}>
+      <Ionicons name={icon} size={24} color="#4A90E2" style={styles.inputIcon} />
+      {onPress ? (
+        <TouchableOpacity style={styles.input} onPress={onPress}>
+          <Text style={value === "Example: Shrimp" ? styles.placeholderText : styles.inputText}>{value}</Text>
+        </TouchableOpacity>
+      ) : (
+        <TextInput
+          style={[styles.input, multiline && styles.multilineInput]}
+          placeholder={placeholder}
+          placeholderTextColor="#999"
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+          multiline={multiline}
+        />
+      )}
+    </View>
+  </View>
+)
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 30,
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: "#f4f7fa",
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 30,
   },
   header: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-    color: '#333',
+    fontSize: 32,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 15,
+    color: "#1C1C1C",
   },
   subtitle: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 30,
-    color: '#666',
+    color: "#888",
+  },
+  inputContainer: {
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#aaa",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  inputIcon: {
+    padding: 10,
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    flex: 1,
     padding: 15,
-    marginBottom: 20,
-    borderColor: '#ddd',
-    borderWidth: 1,
     fontSize: 16,
+    color: "#333",
+  },
+  multilineInput: {
+    height: 100,
+    textAlignVertical: "top",
   },
   placeholderText: {
-    color: '#888',
+    color: "#999",
+    fontSize: 16,
+  },
+  inputText: {
+    color: "#333",
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#4A90E2',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: "#4A90E2",
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: "center",
     marginTop: 20,
+    shadowColor: "#4A90E2",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   modalContent: {
-    backgroundColor: '#fff',
-    margin: 20,
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
   },
   optionButton: {
-    padding: 15,
-    borderBottomColor: '#ddd',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
   },
   optionText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   closeButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: "#4A90E2",
     padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 10,
+    alignItems: "center",
     marginTop: 20,
   },
   closeButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
   },
-});
+})
 
-export default ProfileForm;
+export default ProfileForm
+

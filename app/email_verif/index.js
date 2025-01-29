@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import EntypoIcon from 'react-native-vector-icons/Entypo';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from "react"
+import { useRouter } from "expo-router"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import {
   StyleSheet,
   View,
@@ -15,39 +14,38 @@ import {
   Platform,
   ActivityIndicator,
   BackHandler,
-  Alert
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+  Alert,
+} from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons } from "@expo/vector-icons"
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window")
 
 function EmailVerification() {
-  const [email, setEmail] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [isTimerActive, setIsTimerActive] = useState(true);
-  const [timeRemaining, setTimeRemaining] = useState(30);
-  const router = useRouter();
+  const [email, setEmail] = useState("")
+  const [verificationCode, setVerificationCode] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [isTimerActive, setIsTimerActive] = useState(true)
+  const [timeRemaining, setTimeRemaining] = useState(30)
+  const router = useRouter()
 
-  // Fetch email from AsyncStorage
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const userDetailsString = await AsyncStorage.getItem('userDetails');
+        const userDetailsString = await AsyncStorage.getItem("userDetails")
         if (userDetailsString) {
-          const userDetails = JSON.parse(userDetailsString);
-          setEmail(userDetails.email); // Set the user email from AsyncStorage
+          const userDetails = JSON.parse(userDetailsString)
+          setEmail(userDetails.email)
         }
       } catch (error) {
-        console.error('Failed to fetch user details from AsyncStorage:', error);
+        console.error("Failed to fetch user details from AsyncStorage:", error)
       }
-    };
+    }
 
-    fetchUserDetails(); // Fetch the user email when the component mounts
-  }, []);
+    fetchUserDetails()
+  }, [])
 
-  // Handle back button action on Android
   useEffect(() => {
     const backAction = () => {
       Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
@@ -57,184 +55,171 @@ function EmailVerification() {
           style: "cancel",
         },
         { text: "YES", onPress: () => BackHandler.exitApp() },
-      ]);
-      return true;
-    };
+      ])
+      return true
+    }
 
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction)
 
-    return () => backHandler.remove();
-  }, []);
+    return () => backHandler.remove()
+  }, [])
 
-  // Handle the verification code submission
   const handleVerification = async () => {
     if (!verificationCode || !email) {
-      alert('Please enter both email and verification code');
-      return;
+      Alert.alert("Error", "Please enter both email and verification code")
+      return
     }
-  
-    setIsSubmitting(true);
-    setLoading(true); // Start loading state
+
+    setIsSubmitting(true)
+    setLoading(true)
     try {
-      const userDetailsString = await AsyncStorage.getItem('userDetails');
-      const userDetails = JSON.parse(userDetailsString);
-      const userId = userDetails.userId;
-  
-      console.log('Sending verification request with:', {
+      const userDetailsString = await AsyncStorage.getItem("userDetails")
+      const userDetails = JSON.parse(userDetailsString)
+      const userId = userDetails.userId
+
+      console.log("Sending verification request with:", {
         email,
         verificationCode,
         userId,
-      });
-  
-      const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/verify-code', {
-        method: 'POST',
+      })
+
+      const response = await fetch("https://upcheck-server.onrender.com/api/v1/auth/verify-code", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email,
           verificationCode,
           userId,
         }),
-      });
-  
-      const data = await response.json();
-      console.log('API Response:', data);
-  
-      // Check if the response contains the expected success message
+      })
+
+      const data = await response.json()
+      console.log("API Response:", data)
+
       if (data.message === "Email verified successfully") {
-        alert(data.message); // Show success message
-        router.replace('/profileform'); // Navigate on success
+        router.replace("/profileform")
       } else {
-        alert('Verification failed. Please check your code and try again.');
+        Alert.alert("Verification Failed", "Please check your code and try again.")
       }
     } catch (error) {
-      alert('An error occurred. Please try again.');
-      console.error('Error during verification:', error);
+      Alert.alert("Error", "An error occurred. Please try again.")
+      console.error("Error during verification:", error)
     } finally {
-      setIsSubmitting(false);
-      setLoading(false); // End loading state
+      setIsSubmitting(false)
+      setLoading(false)
     }
-  };
-  
-  // Handle resending the verification code
+  }
+
   const handleResendVerification = async () => {
     if (!isTimerActive) {
-      console.log('Resending verification code...');
-      setIsTimerActive(true);
-      setTimeRemaining(30);
+      console.log("Resending verification code...")
+      setIsTimerActive(true)
+      setTimeRemaining(30)
       try {
-        // Simulate sending the verification code
-        const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/resend-verification', {
-          method: 'POST',
+        const response = await fetch("https://upcheck-server.onrender.com/api/v1/auth/resend-verification", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ email }),
-        });
+        })
 
-        const data = await response.json();
+        const data = await response.json()
         if (data.success) {
-          alert('Verification code sent!');
+          Alert.alert("Success", "Verification code sent!")
         } else {
-          alert('Failed to resend verification code.');
+          Alert.alert("Error", "Failed to resend verification code.")
         }
       } catch (error) {
-        alert('An error occurred while resending the code.');
-        console.error('Error during resend:', error);
+        Alert.alert("Error", "An error occurred while resending the code.")
+        console.error("Error during resend:", error)
       }
     }
-  };
+  }
 
-  // Timer logic for resend code
   useEffect(() => {
-    let timer;
+    let timer
     if (isTimerActive) {
       timer = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
-            clearInterval(timer);
-            setIsTimerActive(false);
-            return 30; // Reset time to 30 for the next attempt
+            clearInterval(timer)
+            setIsTimerActive(false)
+            return 30
           }
-          return prev - 1;
-        });
-      }, 1000);
+          return prev - 1
+        })
+      }, 1000)
     }
-    return () => clearInterval(timer);
-  }, [isTimerActive]);
+    return () => clearInterval(timer)
+  }, [isTimerActive])
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#50e3c2" />
       </View>
-    );
+    )
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#a7e7e9', '#c7c5f7', '#e7cded']}
-        style={styles.background}
-      >
+      <LinearGradient colors={["#E1F5FE", "#B3E5FC", "#81D4FA"]} style={styles.background}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardAvoidingView}
         >
           <View style={styles.verificationContainer}>
-            <Image
-              source={require('../../assets/images/upcheck-logo.png')}
-              resizeMode="contain"
-              style={styles.logo}
-            />
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("../../assets/images/upcheck-logo.png")}
+                resizeMode="contain"
+                style={styles.logo}
+              />
+            </View>
             <Text style={styles.title}>Email Verification</Text>
-            <Text style={styles.description}>
-              Please enter the verification code sent to your email
-            </Text>
-            <Text style={styles.email_text}>
-              {email}
-            </Text>
+            <Text style={styles.description}>Please enter the verification code sent to your email</Text>
+            <Text style={styles.emailText}>{email}</Text>
 
             <View style={styles.inputContainer}>
               <Text style={styles.labelText}>Verification Code</Text>
-              <TextInput
-                placeholder="Enter your verification code"
-                placeholderTextColor="#999"
-                style={styles.input}
-                value={verificationCode}
-                onChangeText={setVerificationCode}
-                keyboardType="numeric"
-                autoCapitalize="none"
-              />
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={24} color="#50e3c2" style={styles.inputIcon} />
+                <TextInput
+                  placeholder="Enter your verification code"
+                  placeholderTextColor="#999"
+                  style={styles.input}
+                  value={verificationCode}
+                  onChangeText={setVerificationCode}
+                  keyboardType="numeric"
+                  autoCapitalize="none"
+                />
+              </View>
             </View>
 
-            <TouchableOpacity
-              style={styles.verifyButton}
-              onPress={handleVerification}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.verifyButtonText}>
-                {isSubmitting ? 'Verifying...' : 'Verify'}
-                {!isSubmitting && <EntypoIcon name="chevron-right" style={styles.nextIcon} />}
-              </Text>
+            <TouchableOpacity style={styles.verifyButton} onPress={handleVerification} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.verifyButtonText}>
+                  Verify
+                  <Ionicons name="chevron-forward-outline" size={20} color="#fff" style={styles.nextIcon} />
+                </Text>
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleResendVerification} disabled={isTimerActive}>
-              <Text style={styles.resendText}>
-                {isTimerActive
-                  ? `Resend code in ${timeRemaining}s`
-                  : "Didn't receive the code? Resend it."}
+            <TouchableOpacity onPress={handleResendVerification} disabled={isTimerActive} style={styles.resendButton}>
+              <Text style={[styles.resendText, isTimerActive && styles.resendTextDisabled]}>
+                {isTimerActive ? `Resend code in ${timeRemaining}s` : "Didn't receive the code? Resend it."}
               </Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -246,93 +231,123 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     flex: 1,
-    justifyContent: 'center',
-  },
-  nextIcon: {
-    color: '#fff',
-    fontSize: 17,
-    marginLeft: 10,
+    justifyContent: "center",
   },
   verificationContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
-    padding: 20,
-    width: '85%',
-    alignSelf: 'center',
-    alignItems: 'center',
+    padding: 30,
+    width: "90%",
+    alignSelf: "center",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
   },
-  logo: {
+  logoContainer: {
     width: width * 0.3,
     height: width * 0.3,
+    borderRadius: (width * 0.3) / 2,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
     marginBottom: 20,
   },
+  logo: {
+    width: "80%",
+    height: "80%",
+  },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#333",
   },
   description: {
     fontSize: 16,
-    marginBottom: 2,
-    textAlign: 'center',
-    color: '#666',
+    marginBottom: 5,
+    textAlign: "center",
+    color: "#666",
   },
-  email_text: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#286',
+  emailText: {
+    fontSize: 18,
+    marginBottom: 25,
+    textAlign: "center",
+    color: "#50e3c2",
+    fontWeight: "600",
   },
   inputContainer: {
-    width: '100%',
-    marginBottom: 15,
+    width: "100%",
+    marginBottom: 20,
   },
   labelText: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#333',
-    fontWeight: '600',
+    fontSize: 16,
+    marginBottom: 8,
+    color: "#333",
+    fontWeight: "600",
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  inputIcon: {
+    padding: 10,
   },
   input: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
+    flex: 1,
     padding: 12,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    color: "#333",
   },
   verifyButton: {
-    backgroundColor: '#50e3c2',
+    backgroundColor: "#50e3c2",
     borderRadius: 25,
-    paddingVertical: 12,
+    paddingVertical: 15,
     paddingHorizontal: 30,
-    marginTop: 20,
+    marginTop: 10,
+    width: "100%",
+    alignItems: "center",
   },
   verifyButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+  },
+  nextIcon: {
+    marginLeft: 10,
+  },
+  resendButton: {
+    marginTop: 20,
   },
   resendText: {
-    marginTop: 20,
-    color: '#1a20c3',
-    textDecorationLine: 'underline',
+    color: "#1a20c3",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  resendTextDisabled: {
+    color: "#999",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
-});
+})
 
-export default EmailVerification;
+export default EmailVerification
+

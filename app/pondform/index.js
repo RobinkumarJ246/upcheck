@@ -9,14 +9,14 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TopBar from '../../components/TopBar';
-import IconFA6 from 'react-native-vector-icons/FontAwesome6';
-import MatIcons from 'react-native-vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Ionicons } from '@expo/vector-icons';
 
 const PondDetailsForm = () => {
   const [pondName, setPondName] = useState('');
@@ -88,20 +88,18 @@ const PondDetailsForm = () => {
       }
   
       try {
-        // Fetch user document by email
         const userResponse = await fetch(`https://upcheck-server.onrender.com/api/users/email/${userDetails.email}`, {
           method: 'GET',
         });
   
         if (!userResponse.ok) {
-          const errorText = await userResponse.text(); // Get the error message
+          const errorText = await userResponse.text();
           throw new Error(`Failed to fetch user details: ${errorText}`);
         }
   
-        const userData = await userResponse.json(); // Get user details including _id
-        const userId = userData._id; // Get the user's _id
+        const userData = await userResponse.json();
+        const userId = userData._id;
   
-        // Create pond details object
         const pondDetails = {
           name: pondName,
           depth: pondDepth,
@@ -110,12 +108,10 @@ const PondDetailsForm = () => {
           cultureStartDate: cultureStartDate.toISOString().split('T')[0],
           type: pondType,
           location: pondLocation,
-          owner_email: userDetails.email, // Owner's email from user details
-          userId: userId, // User ID from fetched user data
+          owner_email: userDetails.email,
+          userId: userId,
         };
-        console.log('Pond Details:', pondDetails);
   
-        // Send pond details to the ponds collection in the database
         const pondResponse = await fetch('https://upcheck-server.onrender.com/api/ponds', {
           method: 'POST',
           headers: {
@@ -129,10 +125,9 @@ const PondDetailsForm = () => {
           throw new Error(`Failed to add pond details: ${errorText}`);
         }
   
-        const pondData = await pondResponse.json(); // Get the created pond document
+        const pondData = await pondResponse.json();
   
-        // Update user details in the users collection
-        const { _id, ...restOfUserData } = userData; // Extract _id and get the rest
+        const { _id, ...restOfUserData } = userData;
   
         const updatedUserDetails = {
           ...restOfUserData,
@@ -153,20 +148,14 @@ const PondDetailsForm = () => {
           throw new Error(`Failed to update user details: ${errorText}`);
         }
   
-        // Store updated userDetails in AsyncStorage
         await AsyncStorage.setItem('userDetails', JSON.stringify(updatedUserDetails));
   
-        // Step to update ponds in AsyncStorage
         const storedPondsString = await AsyncStorage.getItem('ponds');
         const storedPonds = storedPondsString ? JSON.parse(storedPondsString) : {};
         const newPondId = pondData._id;
   
-        // Add the new pond to the ponds array in AsyncStorage
-        storedPonds[newPondId] = pondDetails; // Assuming ponds are keyed by their IDs
+        storedPonds[newPondId] = pondDetails;
         await AsyncStorage.setItem('ponds', JSON.stringify(storedPonds));
-  
-        // Show success message
-        Alert.alert('Success', 'Pond details submitted successfully!');
         router.replace('/(tabs)');
   
       } catch (error) {
@@ -175,7 +164,6 @@ const PondDetailsForm = () => {
     }
   }; 
 
-  // Function to get current location and reverse geocode it
   const getCurrentLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -194,7 +182,6 @@ const PondDetailsForm = () => {
     }
   };
 
-  // Function to handle date change from DateTimePicker
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || cultureStartDate;
     setShowDatePicker(false);
@@ -203,98 +190,103 @@ const PondDetailsForm = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar title={'Upcheck'} />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.header}>Let's add your first pond!</Text>
-        <Text style={styles.subtitle}>
-          Please provide details about your pond. Adding at least one pond is required.
-        </Text>
-
-        <Text style={styles.inputLabel}>Pond Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., Main Shrimp Pond"
-          value={pondName}
-          onChangeText={setPondName}
-        />
-
-        <Text style={styles.inputLabel}>Pond Depth (in meters)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 2.5"
-          keyboardType="numeric"
-          value={pondDepth}
-          onChangeText={setPondDepth}
-        />
-
-        <Text style={styles.inputLabel}>Pond Area (in square meters)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 500"
-          keyboardType="numeric"
-          value={pondArea}
-          onChangeText={setPondArea}
-        />
-
-        <Text style={styles.inputLabel}>Stocking Density (per square meter)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 10"
-          keyboardType="numeric"
-          value={stockingDensity}
-          onChangeText={setStockingDensity}
-        />
-
-        <Text style={styles.inputLabel}>Culture Start Date</Text>
-        <TouchableOpacity
-          style={styles.dateInput}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <MatIcons name='date-range' style={styles.calIcon} color="black" />
-          <Text style={styles.placeholderText}>
-            {cultureStartDate.toISOString().split('T')[0]}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <Text style={styles.header}>Let's add your first pond!</Text>
+          <Text style={styles.subtitle}>
+            Please provide details about your pond. Adding at least one pond is required.
           </Text>
-        </TouchableOpacity>
 
-        <Text style={styles.inputLabel}>Pond Cultivation Type</Text>
-        <TouchableOpacity
-          style={styles.input}
-          onPress={() => setModalVisible(true)}
-        >
-          <IconFA6 name='shrimp' style={styles.icon} color="black" />
-          <Text style={styles.placeholderText}>{pondType}</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.inputLabel}>Pond Location</Text>
-        <View style={styles.locationContainer}>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            placeholder="e.g., Chennai"
-            value={pondLocation}
-            onChangeText={setPondLocation}
+          <FormInput
+            label="Pond Name"
+            value={pondName}
+            onChangeText={setPondName}
+            placeholder="e.g., Main Shrimp Pond"
+            icon="water-outline"
           />
-          <TouchableOpacity style={styles.getLocationButton} onPress={getCurrentLocation}>
-            <IconFA6 name='location-dot' style={styles.icon} color="white" />
-            <Text style={styles.getLocationText}>My Location</Text>
+
+          <FormInput
+            label="Pond Depth (in meters)"
+            value={pondDepth}
+            onChangeText={setPondDepth}
+            placeholder="e.g., 2.5"
+            keyboardType="numeric"
+            icon="resize-outline"
+          />
+
+          <FormInput
+            label="Pond Area (in square meters)"
+            value={pondArea}
+            onChangeText={setPondArea}
+            placeholder="e.g., 500"
+            keyboardType="numeric"
+            icon="square-outline"
+          />
+
+          <FormInput
+            label="Stocking Density (per square meter)"
+            value={stockingDensity}
+            onChangeText={setStockingDensity}
+            placeholder="e.g., 10"
+            keyboardType="numeric"
+            icon="fish-outline"
+          />
+
+          <FormInput
+            label="Culture Start Date"
+            value={cultureStartDate.toISOString().split('T')[0]}
+            onPress={() => setShowDatePicker(true)}
+            icon="calendar-outline"
+          />
+
+          <FormInput
+            label="Pond Cultivation Type"
+            value={pondType}
+            onPress={() => setModalVisible(true)}
+            icon="leaf-outline"
+          />
+
+          <View style={styles.locationContainer}>
+            <FormInput
+              label="Pond Location"
+              value={pondLocation}
+              onChangeText={setPondLocation}
+              placeholder="e.g., Chennai"
+              icon="location-outline"
+              containerStyle={styles.locationInput}
+            />
+            <TouchableOpacity style={styles.getLocationButton} onPress={getCurrentLocation}>
+              <Ionicons name="locate-outline" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Ionicons name="add-circle-outline" size={24} color="white" style={styles.submitButtonIcon} />
+            <Text style={styles.submitButtonText}>Add Pond</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <IconFA6 name='plus' style={styles.icon} color="white" /><Text style={styles.AddPondButtonText}>Add pond</Text>
-        </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker
+          value={cultureStartDate}
+          mode="date"
+          display="default"
+          onChange={onDateChange}
+        />
+      )}
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={cultureStartDate}
-            mode="date"
-            display="default"
-            onChange={onDateChange}
-          />
-        )}
-
-        <Modal visible={modalVisible} animationType="slide">
-          <View style={styles.modalContainer}>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
             <Text style={styles.modalHeader}>Select Cultivation Type</Text>
             {cultivationOptions.map((option, index) => (
               <TouchableOpacity
@@ -312,93 +304,127 @@ const PondDetailsForm = () => {
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
-        </Modal>
-      </ScrollView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
+const FormInput = ({ label, value, onChangeText, placeholder, keyboardType, icon, onPress, containerStyle }) => (
+  <View style={[styles.inputContainer, containerStyle]}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <View style={styles.inputWrapper}>
+      <Ionicons name={icon} size={24} color="#4A90E2" style={styles.inputIcon} />
+      {onPress ? (
+        <TouchableOpacity style={styles.input} onPress={onPress}>
+          <Text style={styles.inputText}>{value}</Text>
+        </TouchableOpacity>
+      ) : (
+        <TextInput
+          style={styles.input}
+          placeholder={placeholder}
+          placeholderTextColor="#999"
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+        />
+      )}
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f4f7fa',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContainer: {
     padding: 20,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#333',
     marginBottom: 10,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  inputContainer: {
     marginBottom: 20,
   },
   inputLabel: {
     fontSize: 16,
-    marginBottom: 5,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  inputWrapper: {
     flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  inputIcon: {
+    padding: 10,
   },
   input: {
-    height: 50,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    justifyContent: 'center',
-    flexDirection: 'row', // Use row direction for icon and text
-    alignItems: 'center',
-  },
-  placeholderText: {
-    color: 'gray',
-    alignSelf: 'center',
     flex: 1,
+    height: 50,
+    fontSize: 16,
+    color: '#333',
+    paddingRight: 10,
+  },
+  inputText: {
+    fontSize: 16,
+    color: '#333',
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  locationInput: {
+    flex: 1,
+    marginRight: 10,
+  },
   getLocationButton: {
-    flexDirection: 'row',
+    backgroundColor: '#4A90E2',
+    borderRadius: 12,
+    padding: 15,
     alignItems: 'center',
-    backgroundColor: '#007BFF',
-    borderRadius: 5,
-    padding: 10,
-    marginLeft: 10,
+    justifyContent: 'center',
   },
-  getLocationText: {
-    color: '#ffffff',
-    marginLeft: 3,
-    fontWeight: 'bold',
-  },
-  icon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  calIcon: {
-    fontSize: 20,
-    marginRight: 5,
-    justifyContent: 'flex-start',
-  },
-  button: {
+  submitButton: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#28a745',
     padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
+    borderRadius: 12,
+    marginTop: 20,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 15,
+  submitButtonIcon: {
+    marginRight: 10,
   },
-  AddPondButtonText: {
+  submitButtonText: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700'
-},
+    fontSize: 18,
+    fontWeight: '700',
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -408,7 +434,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '80%',
     backgroundColor: '#ffffff',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
     shadowColor: '#000',
     shadowOffset: {
@@ -419,35 +445,32 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  optionButton: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderColor: '#ddd',
+  modalHeader: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 15,
+    textAlign: 'center',
   },
-  optionText: {
+  modalOption: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  modalOptionText: {
     fontSize: 16,
+    color: '#333',
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: '#4A90E2',
+    padding: 12,
+    borderRadius: 10,
     alignItems: 'center',
   },
   closeButtonText: {
     color: '#ffffff',
     fontSize: 16,
-  },
-  dateInput: {
-    height: 50,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    justifyContent: 'flex-start', // Align items to the start
-    flexDirection: 'row', // Use row direction for icon and text
-    alignItems: 'center', // Center align items vertically
+    fontWeight: '600',
   },
 });
 
