@@ -29,24 +29,18 @@ function SignUp(props) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   useEffect(() => {
     const backAction = () => {
       Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
-        {
-          text: "Cancel",
-          onPress: () => null,
-          style: "cancel",
-        },
+        { text: "Cancel", onPress: () => null, style: "cancel" },
         { text: "YES", onPress: () => BackHandler.exitApp() },
       ]);
       return true; // Prevent the default back button behavior
     };
 
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
 
     return () => backHandler.remove();
   }, []);
@@ -106,10 +100,11 @@ function SignUp(props) {
   
           // Call the email verification endpoint
           await sendVerificationCode(email, displayName);
-          await sendWelcomeEmail(email, displayName); // New function for verification code
-  
-          Alert.alert("Success", "Account created successfully!");
-          router.replace('/profileform');
+          
+          // Redirect to email verification screen after sending the verification code
+          router.replace('/email_verif'); // Change this to the actual route for your email verification screen
+          
+          Alert.alert("Success", "Account created successfully! Please verify your email.");
         }
       else {
         // Handle errors from the server
@@ -122,7 +117,7 @@ function SignUp(props) {
     }
   };
   
-  // New function to send verification code
+  // Function to send verification code
   const sendVerificationCode = async (email, displayName) => {
     try {
       const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/verify-email', {
@@ -135,9 +130,9 @@ function SignUp(props) {
           userName: displayName, // Assuming you want to use displayName as userName
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         Alert.alert("Error", data.error || "Failed to send verification code.");
       }
@@ -145,8 +140,8 @@ function SignUp(props) {
       Alert.alert("Error", "Failed to send verification code. Please try again later.");
     }
   };
-  
-  // New function to send the welcome email
+
+  // Function to send welcome email
   const sendWelcomeEmail = async (email, displayName) => {
     try {
       const response = await fetch('https://upcheck-server.onrender.com/api/v1/mailing/welcome', {
@@ -156,7 +151,7 @@ function SignUp(props) {
         },
         body: JSON.stringify({
           email,
-          userName: displayName, 
+          userName: displayName,
         }),
       });
 
@@ -234,10 +229,9 @@ function SignUp(props) {
               </View>
             </ScrollView>
 
-            <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}
-            disabled={isSubmitting}>
+            <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp} disabled={isSubmitting}>
               <Text style={styles.signUpButtonText}>
-              {isSubmitting ? 'Signing in...' : 'Signin'}
+                {isSubmitting ? 'Signing in...' : 'Signin'}
                 {!isSubmitting && <EntypoIcon name="chevron-right" style={styles.nextIcon} />}
               </Text>
             </TouchableOpacity>
@@ -247,6 +241,12 @@ function SignUp(props) {
                 Already have an account? Login
               </Text>
             </TouchableOpacity>
+
+            {verificationSent && (
+              <Text style={styles.verificationText}>
+                A verification email has been sent. Please check your inbox.
+              </Text>
+            )}
           </View>
         </KeyboardAvoidingView>
       </LinearGradient>
@@ -255,89 +255,21 @@ function SignUp(props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  background: {
-    flex: 1,
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  signUpContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    padding: 20,
-    width: '85%',
-    alignSelf: 'center',
-    alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  logo: {
-    width: width * 0.3,
-    height: width * 0.3,
-    marginBottom: 20,
-  },
-  upcheck: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  subText: {
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#666',
-    textAlign: 'center',
-  },
-  inputScrollContainer: {
-    width: '100%',
-    maxHeight: height * 0.35, 
-  },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 15,
-  },
-  input: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginBottom: 15,
-  },
-  signUpButton: {
-    backgroundColor: '#50e3c2',
-    borderRadius: 25,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    marginTop: 20,
-  },
-  signUpButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  nextIcon: {
-    color: '#fff',
-    fontSize: 17,
-    marginLeft: 5,
-  },
-  loginText: {
-    color: '#666',
-    fontSize: 16,
-    marginTop: 15,
-    textDecorationLine: 'underline',
-  },
+  container: { flex: 1 },
+  background: { flex: 1 },
+  keyboardAvoidingView: { flex: 1, justifyContent: 'center' },
+  signUpContainer: { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 20, padding: 20, width: '85%', alignSelf: 'center', alignItems: 'center', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5 },
+  logo: { width: width * 0.3, height: width * 0.3, marginBottom: 20 },
+  upcheck: { fontSize: 24, fontWeight: 'bold', marginBottom: 10, color: '#333' },
+  subText: { fontSize: 16, marginBottom: 20, color: '#666', textAlign: 'center' },
+  inputScrollContainer: { width: '100%', maxHeight: height * 0.35 },
+  inputContainer: { width: '100%', marginBottom: 15 },
+  input: { backgroundColor: '#f0f0f0', borderRadius: 10, padding: 12, fontSize: 16, borderWidth: 1, borderColor: '#ddd', marginBottom: 15 },
+  signUpButton: { backgroundColor: '#50e3c2', borderRadius: 25, paddingVertical: 12, paddingHorizontal: 30, marginTop: 20 },
+  signUpButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  nextIcon: { color: '#fff', fontSize: 17, marginLeft: 5 },
+  loginText: { color: '#666', fontSize: 16, marginTop: 15, textDecorationLine: 'underline' },
+  verificationText: { fontSize: 14, marginTop: 20, color: '#ff5733' }
 });
 
 export default SignUp;

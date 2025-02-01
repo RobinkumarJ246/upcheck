@@ -30,6 +30,7 @@ function EmailVerification() {
   const [timeRemaining, setTimeRemaining] = useState(30);
   const router = useRouter();
 
+  // Fetch email from AsyncStorage
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
@@ -46,6 +47,7 @@ function EmailVerification() {
     fetchUserDetails(); // Fetch the user email when the component mounts
   }, []);
 
+  // Handle back button action on Android
   useEffect(() => {
     const backAction = () => {
       Alert.alert("Hold on!", "Are you sure you want to exit the app?", [
@@ -67,14 +69,26 @@ function EmailVerification() {
     return () => backHandler.remove();
   }, []);
 
+  // Handle the verification code submission
   const handleVerification = async () => {
+    if (!verificationCode || !email) {
+      alert('Please enter both email and verification code');
+      return;
+    }
+  
     setIsSubmitting(true);
+    setLoading(true); // Start loading state
     try {
       const userDetailsString = await AsyncStorage.getItem('userDetails');
       const userDetails = JSON.parse(userDetailsString);
       const userId = userDetails.userId;
-
-      // Call the verification API using fetch
+  
+      console.log('Sending verification request with:', {
+        email,
+        verificationCode,
+        userId,
+      });
+  
       const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/verify-code', {
         method: 'POST',
         headers: {
@@ -83,40 +97,59 @@ function EmailVerification() {
         body: JSON.stringify({
           email,
           verificationCode,
-          userId
+          userId,
         }),
       });
-
+  
       const data = await response.json();
-
-      // Check if the verification was successful
-      if (data.success) { // Check if the response indicates success
+      console.log('API Response:', data);
+  
+      // Check if the response contains the expected success message
+      if (data.message === "Email verified successfully") {
         alert(data.message); // Show success message
-        router.replace('/(tabs)'); // Navigate to the home page on successful verification
+        router.replace('/profileform'); // Navigate on success
       } else {
-        alert('Verification failed. Please check your code and try again.'); // Show failure message
+        alert('Verification failed. Please check your code and try again.');
       }
     } catch (error) {
-      alert('An error occurred. Please try again.'); // Generic error message
+      alert('An error occurred. Please try again.');
       console.error('Error during verification:', error);
     } finally {
       setIsSubmitting(false);
+      setLoading(false); // End loading state
     }
   };
-
-  const handleResendVerification = () => {
+  
+  // Handle resending the verification code
+  const handleResendVerification = async () => {
     if (!isTimerActive) {
       console.log('Resending verification code...');
       setIsTimerActive(true);
       setTimeRemaining(30);
-      // Simulate API call for resending the code
+      try {
+        // Simulate sending the verification code
+        const response = await fetch('https://upcheck-server.onrender.com/api/v1/auth/resend-verification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('Verification code sent!');
+        } else {
+          alert('Failed to resend verification code.');
+        }
+      } catch (error) {
+        alert('An error occurred while resending the code.');
+        console.error('Error during resend:', error);
+      }
     }
   };
 
-  const handleSkip = () => {
-    router.replace('/(tabs)')
-  };
-
+  // Timer logic for resend code
   useEffect(() => {
     let timer;
     if (isTimerActive) {
@@ -195,11 +228,6 @@ function EmailVerification() {
                 {isTimerActive
                   ? `Resend code in ${timeRemaining}s`
                   : "Didn't receive the code? Resend it."}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSkip}>
-              <Text style={styles.resendText}>
-                Skip verification
               </Text>
             </TouchableOpacity>
           </View>
