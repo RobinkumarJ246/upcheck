@@ -83,7 +83,7 @@ export default function HomeScreen() {
           <ThemedText>Last Fetched: 5mins ago</ThemedText>
           <TouchableOpacity style={styles.fetchButton} onPress={handleRefreshFetch}>
             <View style={styles.fetchButtonContent}>
-              <IconF name="refresh" style={styles.refreshIcon} />
+              <IconF name="rotate-ccw" style={styles.refreshIcon} />
             </View>
           </TouchableOpacity>
         </Div>
