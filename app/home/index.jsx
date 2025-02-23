@@ -11,7 +11,7 @@ import IconFA6 from 'react-native-vector-icons/FontAwesome6';
 import HomeTopBar from '../../components/HomeTopBar';
 import { LineChart } from 'react-native-chart-kit';
 
-const { width } = Dimensions.get('window');
+const { width: windowWidth } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const handleRefreshFetch = () => {
@@ -114,12 +114,17 @@ export default function HomeScreen() {
       >
         {/* Main Content */}
         <View style={styles.mainContent}>
-          {/* Current Conditions Card */}
-          <Box style={[styles.currentConditionsCard, { padding: 16, marginBottom: 24 }]}>
-            <Text style={[styles.cardTitle, { fontSize: 24, marginBottom: 20 }]}>Current Conditions</Text>
-            <View style={[styles.boxContainer, { gap: 16 }]}>
-              <View style={[styles.gridRow, { marginBottom: 16 }]}>
-                {metrics.slice(0, 2).map((metric, index) => (
+          {/* Current Metrics Card */}
+          <Box style={styles.metricsCard}>
+            <View style={styles.refreshContainer}>
+              <Text style={styles.refreshText}>Refresh</Text>
+              <TouchableOpacity onPress={handleRefreshFetch}>
+              <IconF name="rotate-cw" style={styles.refreshIcon} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.boxContainer}>
+              <View style={styles.gridRow}>
+                {metrics.map((metric, index) => (
                   <TouchableWithoutFeedback 
                     key={index} 
                     onPressIn={() => handlePressIn(`condition${index}`)} 
@@ -157,157 +162,6 @@ export default function HomeScreen() {
                   </TouchableWithoutFeedback>
                 ))}
               </View>
-              <View style={styles.gridRow}>
-                {metrics.slice(2, 4).map((metric, index) => (
-                  <TouchableWithoutFeedback 
-                    key={index + 2}
-                    onPressIn={() => handlePressIn(`condition${index + 2}`)} 
-                    onPressOut={handlePressOut}
-                  >
-                    <Animated.View style={[
-                      styles.skillCard,
-                      getProgressStyle(`condition${index + 2}`)
-                    ]}>
-                      <Progress.Circle 
-                        size={100}
-                        progress={metric.value / metric.max}
-                        color={metric.color}
-                        thickness={8}
-                        formatText={() => `${metric.value}${metric.unit}`}
-                        textStyle={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}
-                        showsText
-                        borderWidth={1}
-                        strokeCap="round"
-                        borderColor="#eee"
-                      />
-                      {metric.isFA6 ? (
-                        <IconFA6 name={metric.icon} style={[styles.icon, { fontSize: 34, marginTop: 16, color: metric.color }]} />
-                      ) : (
-                        <IconF name={metric.icon} style={[styles.icon, { fontSize: 34, marginTop: 16, color: metric.color }]} />
-                      )}
-                      <Text style={{ 
-                        fontSize: 18, 
-                        color: "#000", 
-                        marginTop: 12,
-                        fontWeight: '500',
-                        textAlign: 'center'
-                      }}>{metric.name}</Text>
-                    </Animated.View>
-                  </TouchableWithoutFeedback>
-                ))}
-              </View>
-            </View>
-          </Box>
-
-          {/* Water Quality Card */}
-          <Box style={styles.metricsCard}>
-            <Text style={styles.cardTitle}>Water Quality</Text>
-            <View style={styles.metricsStack}>
-              <TouchableWithoutFeedback onPressIn={() => handlePressIn('ph')} onPressOut={handlePressOut}>
-                <Animated.View style={[styles.metricBox, getProgressStyle('ph')]}>
-                  <View style={styles.metricContent}>
-                    <Progress.Circle 
-                      size={60} 
-                      progress={0.75}
-                      showsText
-                      formatText={() => '7.5'}
-                      color="#03dac6"
-                      thickness={8}
-                      borderWidth={1}
-                      strokeCap="round"
-                      borderColor="#eee"
-                      style={styles.progressCircle}
-                    />
-                    <View style={styles.metricTextContainer}>
-                      <Text style={styles.metricLabel}>pH Level</Text>
-                      <Text style={styles.metricValue}>7.5</Text>
-                      <Text style={styles.metricSubtext}>Optimal Range</Text>
-                    </View>
-                    <IconF name="activity" style={styles.metricIcon} />
-                  </View>
-                </Animated.View>
-              </TouchableWithoutFeedback>
-
-              <TouchableWithoutFeedback onPressIn={() => handlePressIn('oxygen')} onPressOut={handlePressOut}>
-                <Animated.View style={[styles.metricBox, getProgressStyle('oxygen')]}>
-                  <View style={styles.metricContent}>
-                    <Progress.Circle 
-                      size={60} 
-                      progress={0.85}
-                      showsText
-                      formatText={() => '8.0'}
-                      color="#4dabf7"
-                      thickness={8}
-                      borderWidth={1}
-                      strokeCap="round"
-                      borderColor="#eee"
-                      style={styles.progressCircle}
-                    />
-                    <View style={styles.metricTextContainer}>
-                      <Text style={styles.metricLabel}>Dissolved Oxygen</Text>
-                      <Text style={styles.metricValue}>8.0 mg/L</Text>
-                      <Text style={styles.metricSubtext}>Good Condition</Text>
-                    </View>
-                    <IconF name="droplet" style={styles.metricIcon} />
-                  </View>
-                </Animated.View>
-              </TouchableWithoutFeedback>
-            </View>
-          </Box>
-
-          {/* Feeding Status Card */}
-          <Box style={styles.metricsCard}>
-            <Text style={styles.cardTitle}>Feeding Status</Text>
-            <View style={styles.metricsStack}>
-              <TouchableWithoutFeedback onPressIn={() => handlePressIn('feedLevel')} onPressOut={handlePressOut}>
-                <Animated.View style={[styles.metricBox, getProgressStyle('feedLevel')]}>
-                  <View style={styles.metricContent}>
-                    <Progress.Circle 
-                      size={60} 
-                      progress={0.70}
-                      showsText
-                      formatText={() => '70%'}
-                      color="#ffd43b"
-                      thickness={8}
-                      borderWidth={1}
-                      strokeCap="round"
-                      borderColor="#eee"
-                      style={styles.progressCircle}
-                    />
-                    <View style={styles.metricTextContainer}>
-                      <Text style={styles.metricLabel}>Feed Level</Text>
-                      <Text style={styles.metricValue}>70%</Text>
-                      <Text style={styles.metricSubtext}>Needs Refill Soon</Text>
-                    </View>
-                    <IconF name="package" style={styles.metricIcon} />
-                  </View>
-                </Animated.View>
-              </TouchableWithoutFeedback>
-
-              <TouchableWithoutFeedback onPressIn={() => handlePressIn('feedEfficiency')} onPressOut={handlePressOut}>
-                <Animated.View style={[styles.metricBox, getProgressStyle('feedEfficiency')]}>
-                  <View style={styles.metricContent}>
-                    <Progress.Circle 
-                      size={60} 
-                      progress={0.85}
-                      showsText
-                      formatText={() => '85%'}
-                      color="#20c997"
-                      thickness={8}
-                      borderWidth={1}
-                      strokeCap="round"
-                      borderColor="#eee"
-                      style={styles.progressCircle}
-                    />
-                    <View style={styles.metricTextContainer}>
-                      <Text style={styles.metricLabel}>Feed Efficiency</Text>
-                      <Text style={styles.metricValue}>85%</Text>
-                      <Text style={styles.metricSubtext}>High Efficiency</Text>
-                    </View>
-                    <IconF name="trending-up" style={styles.metricIcon} />
-                  </View>
-                </Animated.View>
-              </TouchableWithoutFeedback>
             </View>
           </Box>
 
@@ -367,7 +221,63 @@ export default function HomeScreen() {
             </View>
           </Box>
 
-          {/* Graphs Section */}
+          {/* Water Quality Card */}
+          <Box style={styles.metricsCard}>
+            <Text style={styles.cardTitle}>Water Quality</Text>
+            <View style={styles.metricsStack}>
+              <TouchableWithoutFeedback onPressIn={() => handlePressIn('ph')} onPressOut={handlePressOut}>
+                <Animated.View style={[styles.metricBox, getProgressStyle('ph')]}>
+                  <View style={styles.metricContent}>
+                    <Progress.Circle 
+                      size={60} 
+                      progress={0.75}
+                      showsText
+                      formatText={() => '7.5'}
+                      color="#03dac6"
+                      thickness={8}
+                      borderWidth={1}
+                      strokeCap="round"
+                      borderColor="#eee"
+                      style={styles.progressCircle}
+                    />
+                    <View style={styles.metricTextContainer}>
+                      <Text style={styles.metricLabel}>pH Level</Text>
+                      <Text style={styles.metricValue}>7.5</Text>
+                      <Text style={styles.metricSubtext}>Optimal Range</Text>
+                    </View>
+                    <IconF name="activity" style={styles.metricIcon} />
+                  </View>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+
+              <TouchableWithoutFeedback onPressIn={() => handlePressIn('oxygen')} onPressOut={handlePressOut}>
+                <Animated.View style={[styles.metricBox, getProgressStyle('oxygen')]}>
+                  <View style={styles.metricContent}>
+                    <Progress.Circle 
+                      size={60} 
+                      progress={0.85}
+                      showsText
+                      formatText={() => '8.0'}
+                      color="#4dabf7"
+                      thickness={8}
+                      borderWidth={1}
+                      strokeCap="round"
+                      borderColor="#eee"
+                      style={styles.progressCircle}
+                    />
+                    <View style={styles.metricTextContainer}>
+                      <Text style={styles.metricLabel}>Dissolved Oxygen</Text>
+                      <Text style={styles.metricValue}>8.0 mg/L</Text>
+                      <Text style={styles.metricSubtext}>Good Condition</Text>
+                    </View>
+                    <IconF name="droplet" style={styles.metricIcon} />
+                  </View>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            </View>
+          </Box>
+
+          {/* Water Quality Trends */}
           <Box style={styles.graphBox}>
             <Text style={styles.graphTitle}>Water Quality Trends</Text>
             <View style={styles.legendContainer}>
@@ -384,7 +294,7 @@ export default function HomeScreen() {
                   ...waterQualityData,
                   legend: undefined  // Remove legend from data
                 }}
-                width={width - 64}  // Adjusted width
+                width={windowWidth - 64}  // Adjusted width
                 height={240}        // Adjusted height
                 chartConfig={{
                   backgroundColor: '#ffffff',
@@ -420,6 +330,64 @@ export default function HomeScreen() {
               />
             </View>
           </Box>
+
+          {/* Feeding Status Card */}
+          <Box style={styles.metricsCard}>
+            <Text style={styles.cardTitle}>Feeding Status</Text>
+            <View style={styles.metricsStack}>
+              <TouchableWithoutFeedback onPressIn={() => handlePressIn('feedLevel')} onPressOut={handlePressOut}>
+                <Animated.View style={[styles.metricBox, getProgressStyle('feedLevel')]}>
+                  <View style={styles.metricContent}>
+                    <Progress.Circle 
+                      size={60} 
+                      progress={0.70}
+                      showsText
+                      formatText={() => '70%'}
+                      color="#ffd43b"
+                      thickness={8}
+                      borderWidth={1}
+                      strokeCap="round"
+                      borderColor="#eee"
+                      style={styles.progressCircle}
+                    />
+                    <View style={styles.metricTextContainer}>
+                      <Text style={styles.metricLabel}>Feed Level</Text>
+                      <Text style={styles.metricValue}>70%</Text>
+                      <Text style={styles.metricSubtext}>Needs Refill Soon</Text>
+                    </View>
+                    <IconF name="package" style={styles.metricIcon} />
+                  </View>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+
+              <TouchableWithoutFeedback onPressIn={() => handlePressIn('feedEfficiency')} onPressOut={handlePressOut}>
+                <Animated.View style={[styles.metricBox, getProgressStyle('feedEfficiency')]}>
+                  <View style={styles.metricContent}>
+                    <Progress.Circle 
+                      size={60} 
+                      progress={0.85}
+                      showsText
+                      formatText={() => '85%'}
+                      color="#20c997"
+                      thickness={8}
+                      borderWidth={1}
+                      strokeCap="round"
+                      borderColor="#eee"
+                      style={styles.progressCircle}
+                    />
+                    <View style={styles.metricTextContainer}>
+                      <Text style={styles.metricLabel}>Feed Efficiency</Text>
+                      <Text style={styles.metricValue}>85%</Text>
+                      <Text style={styles.metricSubtext}>High Efficiency</Text>
+                    </View>
+                    <IconF name="trending-up" style={styles.metricIcon} />
+                  </View>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            </View>
+          </Box>
+
+          {/* Feeding Efficiency Chart */}
           <Box style={styles.graphBox}>
             <Text style={styles.graphTitle}>Feeding Efficiency Chart</Text>
             <View style={styles.chartContainer}>
@@ -428,7 +396,7 @@ export default function HomeScreen() {
                   ...feedingEfficiencyData,
                   legend: undefined
                 }}
-                width={width - 80}  // Adjusted width
+                width={windowWidth - 80}  // Adjusted width
                 height={260}        // Adjusted height
                 chartConfig={{
                   backgroundColor: '#ffffff',
@@ -569,7 +537,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, 
     shadowRadius: 5, 
     elevation: 3,
-    width: width - 32,   // Slightly wider
+    width: windowWidth - 32,   // Slightly wider
     alignSelf: 'center',
     alignItems: 'center', // Center children
     minHeight: 380,      // Adjusted height
@@ -585,7 +553,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
+    width: 'window',
     paddingVertical: 12,
     paddingHorizontal: 0,
     marginTop: 8,
@@ -613,6 +581,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+    width: windowWidth - 32,   // Adjusted width
+    alignSelf: 'center',
   },
   metricsStack: {
     marginTop: 8,
@@ -660,9 +630,9 @@ const styles = StyleSheet.create({
   },
   gridRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
-    minHeight: 220,  // Increased height
   },
   skillCard: {
     width: '48%',
@@ -678,6 +648,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
+    marginBottom: 16, // Add margin bottom for spacing
   },
   icon: {
     fontSize: 32,    // Slightly larger icon
@@ -719,4 +690,23 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '500',
   },
+  refreshContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  refreshText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginRight: 8, // Add margin right to separate text and icon
+  },
+  refreshIcon: {
+    fontSize: 15,
+    color: "#fff",
+    backgroundColor: '#00B4BD',
+    padding:4,
+    borderRadius: 5,
+  }
 });
