@@ -14,39 +14,51 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 
 const OPENWEATHER_API_KEY = Constants.expoConfig?.extra?.API_KEY;
-
-const FARM_LATITUDE = 37.7749; // Example latitude
-const FARM_LONGITUDE = -122.4194; // Example longitude
-
+const CITY = "Chennai"; // You can change this to any city name
 const { width: windowWidth } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [weatherData, setWeatherData] = useState(null);
 
+  const fetchWeatherData = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${OPENWEATHER_API_KEY}&units=metric`
+      );
+      
+      if (!response.status === 200) {
+        throw new Error(response.data.message || "Failed to fetch weather data");
+      }
+
+      const weatherMetrics = {
+        temperature: response.data.main?.temp ?? "N/A",
+        humidity: response.data.main?.humidity ?? "N/A",
+        cloudCoverage: response.data.clouds?.all ?? "N/A",
+        rainfall: response.data.rain?.["1h"] ?? 0
+      };
+
+      setWeatherData(weatherMetrics);
+      console.log('Weather Metrics:', weatherMetrics);
+    } catch (error) {
+      console.error('Error fetching weather data:', error.message);
+      Alert.alert(
+        'Error', 
+        error.message || 'Failed to fetch weather data. Please check your API key and connection.'
+      );
+    }
+  };
+
   const handleRefreshFetch = () => {
-    fetchWeatherData(); // Call the weather data fetching function
+    fetchWeatherData();
     Alert.alert(
       'Data Fetching',
-      'Refetching data from the server. Please wait for a moment of silence because this is in development, for now no legit :)',
+      'Refetching weather data from the server...',
       [{
         text: 'OK',
         onPress: () => console.log('OK Pressed'),
       }],
       { cancelable: true }
     );
-  };
-
-  const fetchWeatherData = async () => {
-    try {
-      const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${FARM_LATITUDE}&lon=${FARM_LONGITUDE}&appid=${OPENWEATHER_API_KEY}&units=metric`
-      );
-      setWeatherData(response.data);
-      console.log('Weather Data:', response.data); // Log the fetched data
-    } catch (error) {
-      console.error('Error fetching weather data:', error);
-      Alert.alert('Error', 'Failed to fetch weather data. Please check your API key and internet connection.');
-    }
   };
 
   useEffect(() => {
@@ -56,10 +68,39 @@ export default function HomeScreen() {
   useEffect(() => {
     if (weatherData) {
       setMetrics([
-        { name: 'Rainfall', value: weatherData?.rain?.['1h'] || 0, max: 50, unit: 'mm', icon: 'cloud-rain', color: '#03dac6' },
-        { name: 'Humidity', value: weatherData?.main?.humidity || 0, max: 100, unit: '%', icon: 'wind', color: '#ff9800' },
-        { name: 'Temperature', value: weatherData?.main?.temp || 0, max: 50, unit: '°C', icon: 'temperature-half', color: '#e91e63', isFA6: true },
-        { name: 'Cloud Coverage', value: weatherData?.clouds?.all || 0, max: 100, unit: '%', icon: 'cloud', color: '#2196f3' },
+        { 
+          name: 'Rainfall', 
+          value: weatherData.rainfall, 
+          max: 50, 
+          unit: 'mm', 
+          icon: 'cloud-rain', 
+          color: '#03dac6' 
+        },
+        { 
+          name: 'Humidity', 
+          value: weatherData.humidity, 
+          max: 100, 
+          unit: '%', 
+          icon: 'wind', 
+          color: '#ff9800' 
+        },
+        { 
+          name: 'Temperature', 
+          value: weatherData.temperature, 
+          max: 50, 
+          unit: '°C', 
+          icon: 'temperature-half', 
+          color: '#e91e63', 
+          isFA6: true 
+        },
+        { 
+          name: 'Cloud Coverage', 
+          value: weatherData.cloudCoverage, 
+          max: 100, 
+          unit: '%', 
+          icon: 'cloud', 
+          color: '#2196f3' 
+        },
       ]);
     }
   }, [weatherData]);

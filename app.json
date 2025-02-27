@@ -37,7 +37,7 @@
     "extra": {
       "router": {
         "origin": false,
-        "OPENWEATHER_API_KEY": "1c18996fa78f6e7a6d9118392375f642"
+        "OPENWEATHER_API_KEY": "45da191e846d31a439c4e8fd398ecf0c"
       },
       "eas": {
         "projectId": "4ce19805-1a27-4df3-96db-00d4d1ddcc59"
