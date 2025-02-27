@@ -1,0 +1,38 @@
+{
+    "hello": "Hello",
+    "select_language": "Select Language",
+    "my_profile": "My Profile",
+    "my_account": "My Account",
+    "notifications": "Notifications",
+    "language": "Language",
+    "clear_farm_storage": "Clear Farm Storage",
+    "clear_pond_storage": "Clear Pond Storage",
+    "clear_user_storage": "Clear User Storage",
+    "logout": "Logout",
+    "user_settings": "User Settings",
+    "manage_your_preferences": "Manage your preferences",
+    "close": "Close",
+  
+    "accountPressed": "Account Pressed!",
+    "notificationPressed": "Notification Pressed!",
+  
+    "clearFarmStorageConfirmationTitle": "Clear Farm Storage?",
+    "clearFarmStorageConfirmationMessage": "Are you sure you want to clear all farm details?",
+    "clearPondStorageConfirmationTitle": "Clear Pond Storage?",
+    "clearPondStorageConfirmationMessage": "Are you sure you want to clear all pond details?",
+    "clearUserStorageConfirmationTitle": "Clear User Storage?",
+    "clearUserStorageConfirmationMessage": "Are you sure you want to clear all user details?",
+  
+    "cancel": "Cancel",
+    "okay": "Okay",
+    "success": "Success",
+    "error": "Error",
+  
+    "farmStorageCleared": "Farm storage cleared successfully!",
+    "pondStorageCleared": "Pond storage cleared successfully!",
+    "userStorageCleared": "User storage cleared successfully!",
+    "farmStorageClearFailed": "Failed to clear farm storage.",
+    "pondStorageClearFailed": "Failed to clear pond storage.",
+    "userStorageClearFailed": "Failed to clear user storage."
+  }
+  
