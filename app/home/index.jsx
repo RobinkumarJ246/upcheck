@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Animated, TouchableWithoutFeedback } from 'react-native';
-import { Image, StyleSheet, View, SafeAreaView, Alert, TouchableOpacity, Dimensions } from 'react-native';
+import { Image, StyleSheet, View, SafeAreaView, Alert, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { Box, Div, Text } from 'react-native-magnus';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -12,16 +12,17 @@ import HomeTopBar from '../../components/HomeTopBar';
 import { LineChart } from 'react-native-chart-kit';
 import axios from 'axios';
 import Constants from 'expo-constants';
+import * as Location from 'expo-location';
 
-const OPENWEATHER_API_KEY = Constants.expoConfig?.extra?.API_KEY;
-
-const FARM_LATITUDE = 37.7749; // Example latitude
-const FARM_LONGITUDE = -122.4194; // Example longitude
+const FARM_LATITUDE = 13.0827; // Chennai latitude
+const FARM_LONGITUDE = 80.2707; // Chennai longitude
 
 const { width: windowWidth } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [weatherData, setWeatherData] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   const handleRefreshFetch = () => {
     fetchWeatherData(); // Call the weather data fetching function
@@ -38,28 +39,74 @@ export default function HomeScreen() {
 
   const fetchWeatherData = async () => {
     try {
-      const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${FARM_LATITUDE}&lon=${FARM_LONGITUDE}&appid=${OPENWEATHER_API_KEY}&units=metric`
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${FARM_LATITUDE}&longitude=${FARM_LONGITUDE}&current=temperature_2m,relative_humidity_2m,precipitation,cloud_cover&timezone=Asia/Kolkata`
       );
-      setWeatherData(response.data);
-      console.log('Weather Data:', response.data); // Log the fetched data
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setWeatherData(data);
+      console.log('Weather Data:', data);
+
     } catch (error) {
-      console.error('Error fetching weather data:', error);
-      Alert.alert('Error', 'Failed to fetch weather data. Please check your API key and internet connection.');
+      console.error('Weather API Error:', error);
+      Alert.alert('Error', 'Failed to fetch weather data. Please check your internet connection.');
     }
   };
 
   useEffect(() => {
-    fetchWeatherData();
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+      fetchWeatherData();
+    })();
   }, []);
 
   useEffect(() => {
     if (weatherData) {
       setMetrics([
-        { name: 'Rainfall', value: weatherData?.rain?.['1h'] || 0, max: 50, unit: 'mm', icon: 'cloud-rain', color: '#03dac6' },
-        { name: 'Humidity', value: weatherData?.main?.humidity || 0, max: 100, unit: '%', icon: 'wind', color: '#ff9800' },
-        { name: 'Temperature', value: weatherData?.main?.temp || 0, max: 50, unit: '°C', icon: 'temperature-half', color: '#e91e63', isFA6: true },
-        { name: 'Cloud Coverage', value: weatherData?.clouds?.all || 0, max: 100, unit: '%', icon: 'cloud', color: '#2196f3' },
+        { 
+          name: 'Rainfall', 
+          value: weatherData?.current?.rain || 0, 
+          max: 50, 
+          unit: 'mm', 
+          icon: 'cloud-rain', 
+          color: '#03dac6' 
+        },
+        { 
+          name: 'Humidity', 
+          value: weatherData?.current?.relative_humidity_2m || 0, 
+          max: 100, 
+          unit: '%', 
+          icon: 'wind', 
+          color: '#ff9800' 
+        },
+        { 
+          name: 'Temperature', 
+          value: weatherData?.current?.temperature_2m || 0, 
+          max: 50, 
+          unit: '°C', 
+          icon: 'temperature-half', 
+          color: '#e91e63', 
+          isFA6: true 
+        },
+        { 
+          name: 'Cloud Coverage', 
+          value: weatherData?.current?.cloud_cover || 0, 
+          max: 100, 
+          unit: '%', 
+          icon: 'cloud', 
+          color: '#2196f3' 
+        },
       ]);
     }
   }, [weatherData]);
@@ -160,47 +207,53 @@ export default function HomeScreen() {
               <IconF name="rotate-cw" style={styles.refreshIcon} />
               </TouchableOpacity>
             </View>
-            <View style={styles.boxContainer}>
-              <View style={styles.gridRow}>
-                {metrics.map((metric, index) => (
-                  <TouchableWithoutFeedback 
-                    key={index} 
-                    onPressIn={() => handlePressIn(`condition${index}`)} 
-                    onPressOut={handlePressOut}
-                  >
-                    <Animated.View style={[
-                      styles.skillCard,
-                      getProgressStyle(`condition${index}`)
-                    ]}>
-                      <Progress.Circle 
-                        size={100}
-                        progress={metric.value / metric.max}
-                        color={metric.color}
-                        thickness={8}
-                        formatText={() => `${metric.value}${metric.unit}`}
-                        textStyle={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}
-                        showsText
-                        borderWidth={1}
-                        strokeCap="round"
-                        borderColor="#eee"
-                      />
-                      {metric.isFA6 ? (
-                        <IconFA6 name={metric.icon} style={[styles.icon, { fontSize: 34, marginTop: 16, color: metric.color }]} />
-                      ) : (
-                        <IconF name={metric.icon} style={[styles.icon, { fontSize: 34, marginTop: 16, color: metric.color }]} />
-                      )}
-                      <Text style={{ 
-                        fontSize: 18, 
-                        color: "#000", 
-                        marginTop: 12,
-                        fontWeight: '500',
-                        textAlign: 'center'
-                      }}>{metric.name}</Text>
-                    </Animated.View>
-                  </TouchableWithoutFeedback>
-                ))}
+            {!weatherData ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#1a73e8" />
               </View>
-            </View>
+            ) : (
+              <View style={styles.boxContainer}>
+                <View style={styles.gridRow}>
+                  {metrics.map((metric, index) => (
+                    <TouchableWithoutFeedback 
+                      key={index} 
+                      onPressIn={() => handlePressIn(`condition${index}`)} 
+                      onPressOut={handlePressOut}
+                    >
+                      <Animated.View style={[
+                        styles.skillCard,
+                        getProgressStyle(`condition${index}`)
+                      ]}>
+                        <Progress.Circle 
+                          size={100}
+                          progress={metric.value / metric.max}
+                          color={metric.color}
+                          thickness={8}
+                          formatText={() => `${metric.value}${metric.unit}`}
+                          textStyle={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}
+                          showsText
+                          borderWidth={1}
+                          strokeCap="round"
+                          borderColor="#eee"
+                        />
+                        {metric.isFA6 ? (
+                          <IconFA6 name={metric.icon} style={[styles.icon, { fontSize: 34, marginTop: 16, color: metric.color }]} />
+                        ) : (
+                          <IconF name={metric.icon} style={[styles.icon, { fontSize: 34, marginTop: 16, color: metric.color }]} />
+                        )}
+                        <Text style={{ 
+                          fontSize: 18, 
+                          color: "#000", 
+                          marginTop: 12,
+                          fontWeight: '500',
+                          textAlign: 'center'
+                        }}>{metric.name}</Text>
+                      </Animated.View>
+                    </TouchableWithoutFeedback>
+                  ))}
+                </View>
+              </View>
+            )}
           </Box>
 
           {/* Fish Behavior Card */}
@@ -746,5 +799,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#00B4BD',
     padding:4,
     borderRadius: 5,
-  }
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
 });

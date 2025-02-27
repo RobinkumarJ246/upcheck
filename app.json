@@ -29,7 +29,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow upcheck to use your location for weather updates"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
