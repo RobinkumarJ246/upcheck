@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Animated, TouchableWithoutFeedback } from 'react-native';
 import { Image, StyleSheet, View, SafeAreaView, Alert, TouchableOpacity, Dimensions } from 'react-native';
 import { Box, Div, Text } from 'react-native-magnus';
@@ -10,11 +10,21 @@ import IconF from 'react-native-vector-icons/Feather';
 import IconFA6 from 'react-native-vector-icons/FontAwesome6';
 import HomeTopBar from '../../components/HomeTopBar';
 import { LineChart } from 'react-native-chart-kit';
+import axios from 'axios';
+import Constants from 'expo-constants';
+
+const OPENWEATHER_API_KEY = Constants.expoConfig?.extra?.API_KEY;
+
+const FARM_LATITUDE = 37.7749; // Example latitude
+const FARM_LONGITUDE = -122.4194; // Example longitude
 
 const { width: windowWidth } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const [weatherData, setWeatherData] = useState(null);
+
   const handleRefreshFetch = () => {
+    fetchWeatherData(); // Call the weather data fetching function
     Alert.alert(
       'Data Fetching',
       'Refetching data from the server. Please wait for a moment of silence because this is in development, for now no legit :)',
@@ -25,6 +35,34 @@ export default function HomeScreen() {
       { cancelable: true }
     );
   };
+
+  const fetchWeatherData = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${FARM_LATITUDE}&lon=${FARM_LONGITUDE}&appid=${OPENWEATHER_API_KEY}&units=metric`
+      );
+      setWeatherData(response.data);
+      console.log('Weather Data:', response.data); // Log the fetched data
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      Alert.alert('Error', 'Failed to fetch weather data. Please check your API key and internet connection.');
+    }
+  };
+
+  useEffect(() => {
+    fetchWeatherData();
+  }, []);
+
+  useEffect(() => {
+    if (weatherData) {
+      setMetrics([
+        { name: 'Rainfall', value: weatherData?.rain?.['1h'] || 0, max: 50, unit: 'mm', icon: 'cloud-rain', color: '#03dac6' },
+        { name: 'Humidity', value: weatherData?.main?.humidity || 0, max: 100, unit: '%', icon: 'wind', color: '#ff9800' },
+        { name: 'Temperature', value: weatherData?.main?.temp || 0, max: 50, unit: '°C', icon: 'temperature-half', color: '#e91e63', isFA6: true },
+        { name: 'Cloud Coverage', value: weatherData?.clouds?.all || 0, max: 100, unit: '%', icon: 'cloud', color: '#2196f3' },
+      ]);
+    }
+  }, [weatherData]);
 
   // Static data for Water Quality Trends
   const waterQualityData = {
