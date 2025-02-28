@@ -1,420 +1,361 @@
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
-  View,
-  Text,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Modal,
-  StyleSheet,
+    SafeAreaView,
+    View,
+    Text,
+    FlatList,
+    TouchableOpacity,
+    Alert,
+    Modal,
+    StyleSheet,
+    TextInput,
+    Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import TopBar from '../../components/TopBar';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
+import TopBar from '../../components/TopBar'; // Assuming this is a custom component
+//import {Svg, Path} from 'react-native-svg';
 
 const InventoryManagement = () => {
-  const [items, setItems] = useState([
-    { id: '1', name: 'Fish meal', count: 1, unit: 'kg', type: 'growth-stage' },
-    { id: '2', name: 'Soybean meal', count: 1, unit: 'kg', type: 'initial-stage' },
-    { id: '3', name: 'Corn', count: 500, unit: 'g', type: 'initial-stage' },
-  ]);
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemCount, setNewItemCount] = useState('');
-  const [newItemUnit, setNewItemUnit] = useState('');
-  const [newItemType, setNewItemType] = useState('initial-stage');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [optionsModalVisible, setOptionsModalVisible] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState(null);
-  const [editItemName, setEditItemName] = useState('');
-  const [editItemCount, setEditItemCount] = useState('');
-  const [editItemUnit, setEditItemUnit] = useState('');
-  const [editItemType, setEditItemType] = useState('initial-stage');
-  const [isEditing, setIsEditing] = useState(false);
+    const [items, setItems] = useState([
+        { id: '1', name: 'Starter Feed', count: 1.0, category: 'non-veg' },
+        { id: '2', name: 'Grower Feed', count: 0.5, category: 'veg' },
+    ]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [newItemName, setNewItemName] = useState('Starter Feed');
+    const [customFeedName, setCustomFeedName] = useState('');
+    const [newItemCount, setNewItemCount] = useState('1.0');
+    const [newItemCategory, setNewItemCategory] = useState('non-veg');
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedItemId, setSelectedItemId] = useState(null);
 
-  const addItem = () => {
-    if (!newItemName || !newItemCount || !newItemUnit) {
-      Alert.alert('Error', 'Please provide all item details');
-      return;
-    }
-    const newItem = {
-      id: Math.random().toString(),
-      name: newItemName,
-      count: parseInt(newItemCount),
-      unit: newItemUnit,
-      type: newItemType,
+    const getIconContainerStyle = (category) => ({
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: category === 'veg' ? '#4CAF50' : '#F44336', // Veg: Green, Non-veg: Red
+    });
+
+    const addItem = () => {
+        const itemName = newItemName === 'Other' ? customFeedName : newItemName;
+        if (!itemName) {
+            Alert.alert('Error', 'Please provide a feed name');
+            return;
+        }
+        const newItem = {
+            id: isEditing ? selectedItemId : Math.random().toString(),
+            name: itemName,
+            count: parseFloat(newItemCount),
+            category: newItemCategory,
+        };
+
+        if (isEditing) {
+            setItems((prevItems) =>
+                prevItems.map((item) => (item.id === selectedItemId ? newItem : item))
+            );
+        } else {
+            setItems((prevItems) => [...prevItems, newItem]);
+        }
+        resetForm();
     };
-    setItems((prevItems) => [...prevItems, newItem]);
-    resetForm();
-  };
 
-  const removeItem = (itemId) => {
-    Alert.alert(
-      'Confirm Deletion',
-      'Are you sure you want to delete this item?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          onPress: () => {
-            setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
-            setSelectedItemId(null);
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
-  };
+    const editItem = (item) => {
+        setNewItemName(item.name);
+        setCustomFeedName(item.name === 'Starter Feed' || item.name === 'Grower Feed' || item.name === 'Finisher Feed' ? '' : item.name); // if item.name  is any of these values it will show nothing otherwise it will display item name
+        setNewItemCount(item.count.toString());
+        setNewItemCategory(item.category);
+        setSelectedItemId(item.id);
+        setIsEditing(true);
+        setModalVisible(true);
+    };
 
-  const editItem = () => {
-    if (!editItemName || !editItemCount || !editItemUnit || !selectedItemId) {
-      Alert.alert('Error', 'Please select an item and provide new details');
-      return;
-    }
-    const updatedItems = items.map((item) =>
-      item.id === selectedItemId
-        ? { ...item, name: editItemName, count: parseInt(editItemCount), unit: editItemUnit, type: editItemType }
-        : item
-    );
-    setItems(updatedItems);
-    resetForm();
-  };
+    const deleteItem = () => {
+        Alert.alert(
+            'Delete Feed',
+            'Are you sure you want to delete this feed?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    onPress: () => {
+                        setItems((prevItems) => prevItems.filter((item) => item.id !== selectedItemId));
+                        resetForm();
+                    },
+                },
+            ],
+            { cancelable: false }
+        );
+    };
 
-  const selectItemForEdit = (itemId) => {
-    const selectedItem = items.find((item) => item.id === itemId);
-    setSelectedItemId(itemId);
-    setEditItemName(selectedItem.name);
-    setEditItemCount(selectedItem.count.toString());
-    setEditItemUnit(selectedItem.unit);
-    setEditItemType(selectedItem.type);
-    setIsEditing(true);
-    setModalVisible(true);
-    setOptionsModalVisible(false);
-  };
+    const resetForm = () => {
+        setNewItemName('Starter Feed');
+        setCustomFeedName('');
+        setNewItemCount('1.0');
+        setNewItemCategory('non-veg');
+        setModalVisible(false);
+        setIsEditing(false);
+        setSelectedItemId(null);
+    };
 
-  const openOptionsModal = (itemId) => {
-    setSelectedItemId(itemId);
-    setOptionsModalVisible(true);
-  };
+    const shrimpIcon = require('../../assets/images/shrimp_icon_2.png');
 
-  const resetForm = () => {
-    setNewItemName('');
-    setNewItemCount('');
-    setNewItemUnit('');
-    setNewItemType('initial-stage');
-    setSelectedItemId(null);
-    setEditItemName('');
-    setEditItemCount('');
-    setEditItemUnit('');
-    setEditItemType('initial-stage');
-    setIsEditing(false);
-    setModalVisible(false);
-  };
+    const renderItem = ({ item }) => (
+        <TouchableOpacity style={styles.itemContainer} onPress={() => editItem(item)}>
+            <View style={getIconContainerStyle(item.category)}>
+                {item.category === 'veg' ? (
+                    <Image source={shrimpIcon} style={styles.shrimpIcon} />
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <TopBar title={'Inventory'} />
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <View style={styles.itemText}>
-              {item.type === 'initial-stage' ? (
-                <Ionicons style={styles.icon} name="leaf" size={20} color="green" />
-              ) : (
-                <Ionicons style={styles.icon} name="barbell" size={20} color="orange" />
-              )}
-              <Text style={styles.itemName}>
-                {item.name} - {item.count} {item.unit}
-              </Text>
+                ) : (
+                  <Image source={shrimpIcon} style={styles.shrimpIcon} />
+                )}
             </View>
-            <TouchableOpacity
-              style={styles.optionsButton}
-              onPress={() => openOptionsModal(item.id)}
-            >
-              <Ionicons name="ellipsis-vertical" size={20} color="#007BFF" />
+            <Text style={styles.itemName}>{item.name} ({item.count} kg)</Text>
+            <TouchableOpacity style={styles.optionsButton} onPress={() => editItem(item)}>
+            <MaterialCommunityIcons name="dots-vertical" size={24} color="gray" />
             </TouchableOpacity>
-          </View>
-        )}
-      />
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => { setModalVisible(true); setIsEditing(false); }}
-      >
-        <Ionicons name="add" size={24} color="white" />
-      </TouchableOpacity>
-      {/* Add/Edit Item Modal */}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={resetForm}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {isEditing ? (
-              <View>
-                <Text style={styles.modalTitle}>Edit Item</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Item Name"
-                  value={editItemName}
-                  onChangeText={setEditItemName}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Item Count"
-                  keyboardType="numeric"
-                  value={editItemCount}
-                  onChangeText={setEditItemCount}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Item Unit (kg, g, l, ml)"
-                  value={editItemUnit}
-                  onChangeText={setEditItemUnit}
-                />
-                <View style={styles.radioContainer}>
-                  <TouchableOpacity 
-                    style={[styles.radioButton, editItemType === 'initial-stage' && styles.radioButtonSelected]}
-                    onPress={() => setEditItemType('initial-stage')}
-                  >
-                    <Text style={styles.radioText}>Initial Stage Feed</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.radioButton, editItemType === 'growth-stage' && styles.radioButtonSelected]}
-                    onPress={() => setEditItemType('growth-stage')}
-                  >
-                    <Text style={styles.radioText}>Growth Stage Feed</Text>
-                  </TouchableOpacity>
+        </TouchableOpacity>
+    );
+
+    return (
+        
+            <SafeAreaView style={styles.safeArea}>
+                <TopBar title={'Inventory'} />
+
+            {/* Inventory List */}
+            <FlatList
+                data={items}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                style={{ paddingHorizontal: 10 }}
+            />
+
+            {/* Add Feed Button */}
+            <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+                <Ionicons name="add" size={32} color="white" />
+            </TouchableOpacity>
+
+            {/* Add/Edit Feed Modal */}
+            <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={resetForm}>
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>{isEditing ? 'Edit Feed' : 'Add Feed'}</Text>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Feed Type</Text>
+                            <Picker
+                                selectedValue={newItemName}
+                                onValueChange={(value) => setNewItemName(value)}
+                                style={styles.picker}
+                            >
+                                <Picker.Item label="Starter Feed" value="Starter Feed" />
+                                <Picker.Item label="Grower Feed" value="Grower Feed" />
+                                <Picker.Item label="Finisher Feed" value="Finisher Feed" />
+                                <Picker.Item label="Other" value="Other" />
+                            </Picker>
+                        </View>
+
+                        {newItemName === 'Other' && (
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Custom Feed Name</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter Custom Feed Name"
+                                    value={customFeedName}
+                                    onChangeText={setCustomFeedName}
+                                />
+                            </View>
+                        )}
+
+                        {/* Feed Weight Section */}
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Weight (kg)</Text>
+                            <View style={styles.counterContainer}>
+                                <TouchableOpacity
+                                    onPress={() => setNewItemCount((prev) => (Math.max(parseFloat(prev) - 0.1, 0)).toFixed(1))}
+                                    style={styles.counterButton}
+                                >
+                                    <Text style={styles.counterText}>-</Text>
+                                </TouchableOpacity>
+                                <TextInput
+                                    style={styles.countInput}
+                                    keyboardType="numeric"
+                                    value={newItemCount}
+                                    onChangeText={setNewItemCount}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setNewItemCount((prev) => (parseFloat(prev) + 0.1).toFixed(1))}
+                                    style={styles.counterButton}
+                                >
+                                    <Text style={styles.counterText}>+</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Category Selection */}
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Category</Text>
+                            <View style={styles.radioContainer}>
+                                <TouchableOpacity
+                                    style={[styles.radioButton, newItemCategory === 'veg' && styles.radioSelected]}
+                                    onPress={() => setNewItemCategory('veg')}
+                                >
+                                    <Text style={[styles.radioText, newItemCategory === 'veg' && styles.radioTextSelected]}>Veg</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.radioButton, newItemCategory === 'non-veg' && styles.radioSelected]}
+                                    onPress={() => setNewItemCategory('non-veg')}
+                                >
+                                    <Text style={[styles.radioText, newItemCategory === 'non-veg' && styles.radioTextSelected]}>Non-Veg</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity style={styles.addButton} onPress={addItem}>
+                            <Text style={styles.buttonText}>{isEditing ? 'Save Changes' : 'Add Feed'}</Text>
+                        </TouchableOpacity>
+
+                        {isEditing && (
+                            <TouchableOpacity style={styles.deleteButton} onPress={deleteItem}>
+                                <Text style={styles.buttonText}>Delete Feed</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity style={styles.closeButton} onPress={resetForm}>
+                            <Text style={styles.closeButtonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={editItem}
-                >
-                  <Text style={styles.buttonText}>Save Changes</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View>
-                <Text style={styles.modalTitle}>Add Item</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Item Name"
-                  value={newItemName}
-                  onChangeText={setNewItemName}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Item Count"
-                  keyboardType="numeric"
-                  value={newItemCount}
-                  onChangeText={setNewItemCount}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Item Unit (kg, g, l, ml)"
-                  value={newItemUnit}
-                  onChangeText={setNewItemUnit}
-                />
-                <View style={styles.radioContainer}>
-                  <TouchableOpacity 
-                    style={[styles.radioButton, newItemType === 'initial-stage' && styles.radioButtonSelected]}
-                    onPress={() => setNewItemType('initial-stage')}
-                  >
-                    <Text style={styles.radioText}>Initial Stage Feed</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.radioButton, newItemType === 'growth-stage' && styles.radioButtonSelected]}
-                    onPress={() => setNewItemType('growth-stage')}
-                  >
-                    <Text style={styles.radioText}>Growth Stage Feed</Text>
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={addItem}
-                >
-                  <Text style={styles.buttonText}>Add Item</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            <TouchableOpacity style={styles.closeButton} onPress={resetForm}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      {/* Options Modal */}
-      <Modal
-        visible={optionsModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setOptionsModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Options</Text>
-            <TouchableOpacity
-              style={styles.optionButton}
-              onPress={() => {
-                selectItemForEdit(selectedItemId);
-              }}
-            >
-              <Text style={styles.optionButtonModalText}><Ionicons name="pencil" size={16} style={styles.listIcon} color="black" />Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.optionButton}
-              onPress={() => {
-                removeItem(selectedItemId);
-                setOptionsModalVisible(false);
-              }}
-            >
-              <Text style={styles.optionButtonModalText}><Ionicons name="trash-bin-outline" size={16} style={styles.listIcon} color="black" />Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setOptionsModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
-  );
+            </Modal>
+        </SafeAreaView>
+    );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+    safeArea: { flex: 1, backgroundColor: '#f9f9f9' }, // Light background
+    itemContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        backgroundColor: '#fff',
+        marginVertical: 5,
+        marginHorizontal: 10,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3, // for Android shadow
+    },
+    itemName: { fontSize: 16, flex: 1, marginLeft: 10, color: '#333' },
+    optionsButton: { padding: 10 },
+    fab: {
+        position: 'absolute',
+        bottom: 30,
+        right: 20,
+        backgroundColor: '#2196F3', // Modern blue
+        borderRadius: 30,
+        width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+    },
+    modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+    modalContent: {
+        width: '90%',
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 16,
+        elevation: 5,
+    },
+    modalTitle: { fontSize: 22, fontWeight: '600', marginBottom: 15, color: '#333' },
+    inputContainer: { marginBottom: 15 },
+    label: { fontSize: 16, fontWeight: '500', color: '#555', marginBottom: 5 },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 16,
+        color: '#333',
+    },
+    picker: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        color: '#333',
+    },
+    counterContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5 },
+    counterButton: {
+        padding: 12,
+        backgroundColor: '#e0e0e0',
+        borderRadius: 8,
+        width: 40,
+        alignItems: 'center',
+    },
+    counterText: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+    countInput: {
+        width: 70,
+        textAlign: 'center',
+        fontSize: 18,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        paddingVertical: 8,
+        color: '#333',
+    },
+    radioContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 5 },
+    radioButton: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 25,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        backgroundColor: '#f0f0f0',
+    },
+    radioSelected: {
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
+    },
+    radioText: { fontSize: 16, color: '#333' },
+    radioTextSelected: { color: '#fff' },
+    addButton: {
+        backgroundColor: '#4CAF50',
+        padding: 15,
+        alignItems: 'center',
+        borderRadius: 10,
+        marginTop: 20,
+    },
+    deleteButton: {
+        backgroundColor: '#F44336',
+        padding: 15,
+        alignItems: 'center',
+        borderRadius: 10,
+        marginTop: 10,
+    },
+    buttonText: { fontSize: 18, color: '#fff', fontWeight: '600' },
+    closeButton: {
+        backgroundColor: '#9E9E9E',
+        padding: 15,
+        alignItems: 'center',
+        borderRadius: 10,
+        marginTop: 10,
+    },
+    shrimpIcon: {
+      width: 24,  // Adjust size as needed
+      height: 24, // Adjust size as needed
+      resizeMode: 'contain', // or 'cover', depending on how you want it to fit
   },
-  itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    marginVertical: 5,
-    marginHorizontal: 10,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  itemText: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  itemName: {
-    fontSize: 16,
-    color: '#333',
-  },
-  icon: {
-    marginRight: 10,
-  },
-  optionsButton: {
-    padding: 5,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 40,
-    right: 25,
-    backgroundColor: '#007BFF',
-    borderRadius: 50,
-    padding: 15,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  radioContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  radioButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    marginHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioButtonSelected: {
-    backgroundColor: '#007BFF',
-    borderColor: '#007BFF',
-  },
-  radioText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  addButton: {
-    backgroundColor: '#007BFF',
-    borderRadius: 5,
-    padding: 10,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  closeButton: {
-    backgroundColor: '#FF3D00',
-    borderRadius: 5,
-    padding: 10,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  optionButtonModalText: {
-    color: '#007BFF',
-    fontSize: 16,
-    marginVertical: 10,
-  },
-  listIcon: {
-    marginRight: 5,
-  },
+    closeButtonText: { fontSize: 18, color: '#fff', fontWeight: '600' },
 });
 
 export default InventoryManagement;
