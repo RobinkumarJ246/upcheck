@@ -14,7 +14,7 @@ const HomeTopBar = ({ title, onButtonPress }) => {
         if (onButtonPress) {
             onButtonPress();
         }
-        router.push('/pondform');
+        router.push('/analyze_pond');
     };
 
     return (
