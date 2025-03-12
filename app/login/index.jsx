@@ -134,6 +134,12 @@ function Login() {
             <Text style={styles.forgotPassword}>Forgot Password?</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            onPress={() => router.replace("/(tabs)")}
+          >
+            <Text style={styles.forgotPassword}>Bypass login (Demo)</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={() => router.replace("/signup")}>
             <Text style={styles.footerText}>
               Don't have an account? <Text style={styles.link}>Sign up here!</Text>

@@ -17,7 +17,8 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "^2.0.0",
-    "@react-native-community/datetimepicker": "^8.2.0",
+    "@react-native-community/datetimepicker": "8.0.1",
+    "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/native": "^6.0.2",
     "axios": "^1.8.1",
@@ -50,7 +51,9 @@
     "react-native-chart-kit": "^6.12.0",
     "react-native-fab": "^1.0.18",
     "react-native-gesture-handler": "~2.16.1",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-magnus": "^1.0.63",
+    "react-native-material-datetime-picker": "^0.2.1",
     "react-native-modal": "^13.0.1",
     "react-native-paper": "^5.13.1",
     "react-native-progress": "^5.0.1",
@@ -72,5 +75,6 @@
     "react-test-renderer": "18.2.0",
     "typescript": "~5.3.3"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
