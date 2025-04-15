@@ -223,12 +223,21 @@ scripts/               # Utility scripts (e.g., reset-project.js)
 
 ## Contributing
 
-- **Pull Requests:**  
-  - Fork, branch, and submit PRs with clear descriptions.
-- **Code Reviews:**  
-  - Follow code style, add comments for complex logic.
-- **Issues:**  
-  - Use GitHub Issues for bugs/feature requests.
+- **Branching:**
+  - Create a new branch from `main` for each feature, bugfix, or improvement.
+  - Use descriptive branch names, e.g., `feature/add-language-support`, `bugfix/login-crash`.
+- **Pull Requests:**
+  - Ensure your branch is up to date with `main` before opening a PR.
+  - Submit a pull request to the `main` branch.
+  - Provide a clear, concise description of your changes and reference related issues if applicable.
+  - Include screenshots or screen recordings for UI changes.
+  - Ensure your code passes all tests and lint checks.
+- **Code Reviews:**
+  - Address all review comments and suggestions.
+  - Add comments for complex logic or decisions.
+- **Issues:**
+  - Use GitHub Issues for bugs, feature requests, or questions.
+  - Reference issues in your PRs using `Fixes #issue_number` or `Closes #issue_number`.
 
 ---
 
